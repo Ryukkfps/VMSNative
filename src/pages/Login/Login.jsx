@@ -1,39 +1,68 @@
 import { StyleSheet, Text, View, TextInput, TouchableOpacity } from 'react-native'
 import React, { useState } from 'react'
+import axios from 'axios'
 
 const Login = ({navigation}) => {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [emailOrPhone, setEmailOrPhone] = useState('')
+  const [otp, setOtp] = useState('')
+  const [otpinput, setOtpinput] = useState('')
+  const [isOtpSent, setIsOtpSent] = useState(false)
 
-  const handleLogin = () => {
-    // Add login logic here
-    console.log('Login pressed:', email, password)
+  const handleSendOtp = async () => {
+    try{
+      const datatosend = {
+        email : emailOrPhone
+      }
+      const response = await axios.post('http://10.0.2.2:5133/api/Login/SentEMAILOTP',datatosend);
+      setOtp(response.data?.EmailOTP)
+      setIsOtpSent(true)
+      alert('OTP sent successfully')
+    }catch(error){
+      console.log(error)
+    }
+  };
+
+  const handleVerifyOtp = () => {
+    if (otpinput === otp) {
+      alert('OTP verified successfully')
+      navigation.navigate('Home')
+    } else {
+      alert('Invalid OTP')
+    }
+    // Navigate to the main application screen upon successful verification
   }
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Login</Text>
       
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
-      
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-
-      <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-        <Text style={styles.buttonText}>Login</Text>
-      </TouchableOpacity>
+      {!isOtpSent ? (
+        <>
+          <TextInput
+            style={styles.input}
+            placeholder="Email or Phone"
+            value={emailOrPhone}
+            onChangeText={setEmailOrPhone}
+            autoCapitalize="none"
+          />
+          <TouchableOpacity style={styles.loginButton} onPress={handleSendOtp}>
+            <Text style={styles.buttonText}>Send OTP</Text>
+          </TouchableOpacity>
+        </>
+      ) : (
+        <>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter OTP"
+            value={otpinput}
+            onChangeText={setOtpinput}
+            keyboardType="numeric"
+          />
+          <TouchableOpacity style={styles.loginButton} onPress={handleVerifyOtp}>
+            <Text style={styles.buttonText}>Verify OTP</Text> 
+          </TouchableOpacity>
+        </>
+      )}
 
       <TouchableOpacity style={styles.registerButton}
       onPress={() => navigation.navigate('Register')}>
