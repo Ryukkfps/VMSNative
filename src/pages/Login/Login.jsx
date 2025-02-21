@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View, TextInput, TouchableOpacity } from 'react-native'
 import React, { useState } from 'react'
 import axios from 'axios'
+import { storeToken, getToken } from '../../utils/dbStore';
 
 const Login = ({navigation}) => {
   const [emailOrPhone, setEmailOrPhone] = useState('')
@@ -22,8 +23,14 @@ const Login = ({navigation}) => {
     }
   };
 
-  const handleVerifyOtp = () => {
+  const handleVerifyOtp = async () => {
     if (otpinput === otp) {
+
+      const response = await axios.post('http://10.0.2.2:5133/api/Login/Token', {
+        email : emailOrPhone,
+      })
+      const token = response.data?.token
+      const stored = await storeToken(token);
       alert('OTP verified successfully')
       navigation.navigate('Home')
     } else {

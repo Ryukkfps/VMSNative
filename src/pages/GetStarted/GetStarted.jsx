@@ -1,9 +1,36 @@
-import { StyleSheet, Text, View, FlatList, Dimensions, Image, TouchableOpacity } from 'react-native'
-import React, { useState } from 'react'
+import { StyleSheet, Text, View, FlatList, Dimensions, Image, TouchableOpacity, ActivityIndicator } from 'react-native'
+import React, { useState, useEffect } from 'react'
+import { getToken } from '../../utils/dbStore'
 
 const GetStarted = ({ navigation }) => {
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [isLoading, setIsLoading] = useState(true)
   
+  useEffect(() => {
+    const checkTokenAndRedirect = async () => {
+      try {
+        const token = await getToken();
+        if (token) {
+          navigation.replace('Home');
+        }
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error checking token:', error);
+        setIsLoading(false);
+      }
+    };
+
+    checkTokenAndRedirect();
+  }, [navigation]);
+
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0066cc" />
+      </View>
+    );
+  }
+
   // Sample carousel data - replace images with your actual image paths
   const carouselData = [
     { 
@@ -44,6 +71,20 @@ const GetStarted = ({ navigation }) => {
     setCurrentIndex(Math.round(index))
   }
 
+  const handleGetStarted = async () => {
+    try {
+      const token = await getToken();
+      if (token) {
+        navigation.replace('Home');
+      } else {
+        navigation.replace('Login');
+      }
+    } catch (error) {
+      console.error('Error checking token:', error);
+      navigation.replace('Login');
+    }
+  }
+
   return (
     <View style={styles.container}>
       <FlatList
@@ -53,30 +94,27 @@ const GetStarted = ({ navigation }) => {
         pagingEnabled
         showsHorizontalScrollIndicator={false}
         onScroll={handleScroll}
+        keyExtractor={(item) => item.id}
       />
       
-      {/* Pagination dots */}
       <View style={styles.pagination}>
         {carouselData.map((_, index) => (
           <View
             key={index}
             style={[
               styles.dot,
-              { backgroundColor: index === currentIndex ? '#000' : '#ccc' }
+              { backgroundColor: currentIndex === index ? '#000' : '#ccc' }
             ]}
           />
         ))}
       </View>
 
-      {/* Show Get Started Button only on last slide */}
-      {currentIndex === carouselData.length - 1 && (
-        <TouchableOpacity 
-          style={styles.button} 
-          onPress={() => navigation.navigate('Login')}
-        >
-          <Text style={styles.buttonText}>Get Started</Text>
-        </TouchableOpacity>
-      )}
+      <TouchableOpacity 
+        style={styles.button} 
+        onPress={handleGetStarted}
+      >
+        <Text style={styles.buttonText}>Get Started</Text>
+      </TouchableOpacity>
     </View>
   )
 }
@@ -144,5 +182,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#fff',
     textAlign: 'center',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
   },
 })
