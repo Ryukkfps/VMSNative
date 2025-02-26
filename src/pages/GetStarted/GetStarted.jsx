@@ -109,12 +109,14 @@ const GetStarted = ({ navigation }) => {
         ))}
       </View>
 
-      <TouchableOpacity 
-        style={styles.button} 
-        onPress={handleGetStarted}
-      >
-        <Text style={styles.buttonText}>Get Started</Text>
-      </TouchableOpacity>
+      {currentIndex === 2 && (
+        <TouchableOpacity 
+          style={styles.button} 
+          onPress={handleGetStarted}
+        >
+          <Text style={styles.buttonText}>Get Started</Text>
+        </TouchableOpacity>
+      )}
     </View>
   )
 }
