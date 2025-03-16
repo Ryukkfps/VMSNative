@@ -14,7 +14,8 @@ const Login = ({navigation}) => {
       const datatosend = {
         email : emailOrPhone
       }
-      const response = await axios.post('http://10.0.2.2:5133/api/Login/SentEMAILOTP',datatosend);
+      const response = await axios.post('http://192.168.29.5:3000/api/login/sentemailloginotp',datatosend);
+      console.log(response.data)
       setOtp(response.data?.EmailOTP)
       setIsOtpSent(true)
       alert('OTP sent successfully')
@@ -24,9 +25,9 @@ const Login = ({navigation}) => {
   };
 
   const handleVerifyOtp = async () => {
-    if (otpinput === otp) {
+    if (otpinput == otp) {
 
-      const response = await axios.post('http://10.0.2.2:5133/api/Login/Token', {
+      const response = await axios.post('http://192.168.29.5:3000/api/login/token', {
         email : emailOrPhone,
       })
       const token = response.data?.token

@@ -11,15 +11,15 @@ const Register = ({navigation}) => {
     try {
 
       const datatosend = {
-        name,
-        email,
-        phone
+        Name : name,
+        Email : email,
+        Phone : phone
       }
       console.log(datatosend)
-      const response = await axios.post('http://10.0.2.2:5133/api/Users', {
-        name,
-        email,
-        phone
+      const response = await axios.post('http://192.168.29.5:3000/api/Users', {
+        Name: name,
+        Email: email,
+        Phone: phone
       });
       alert('User registered successfully');
       navigation.navigate('Home')
