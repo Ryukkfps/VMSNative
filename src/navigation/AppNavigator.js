@@ -4,7 +4,8 @@ import GetStarted from '../pages/GetStarted/GetStarted';
 import Login from '../pages/Login/Login';
 import Register from '../pages/Register/Register';
 import HomePage from '../pages/HomePage/HomePage';
-
+import AddHome from '../pages/AddHome/AddHome';
+import SelectSociety from '../pages/AddHome/SelectSociety';
 const Stack = createNativeStackNavigator();
 
 const AppNavigator = () => {
@@ -22,6 +23,8 @@ const AppNavigator = () => {
         <Stack.Screen name="Login" component={Login} />
         <Stack.Screen name="Register" component={Register} />
         <Stack.Screen name="Home" component={HomePage} />
+        <Stack.Screen name="AddHome" component={AddHome} />
+        <Stack.Screen name="SelectSociety" component={SelectSociety} />
 
       </Stack.Navigator>
     </NavigationContainer>
