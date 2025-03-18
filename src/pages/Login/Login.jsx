@@ -2,6 +2,7 @@ import { StyleSheet, Text, View, TextInput, TouchableOpacity } from 'react-nativ
 import React, { useState } from 'react'
 import axios from 'axios'
 import { storeToken, getToken } from '../../utils/dbStore';
+import {API_URL} from '@env'
 
 const Login = ({navigation}) => {
   const [emailOrPhone, setEmailOrPhone] = useState('')
@@ -14,7 +15,7 @@ const Login = ({navigation}) => {
       const datatosend = {
         email : emailOrPhone
       }
-      const response = await axios.post('http://192.168.29.5:3000/api/login/sentemailloginotp',datatosend);
+      const response = await axios.post(`${API_URL}/login/sentemailloginotp`,datatosend);
       console.log(response.data)
       setOtp(response.data?.EmailOTP)
       setIsOtpSent(true)
@@ -27,8 +28,9 @@ const Login = ({navigation}) => {
   const handleVerifyOtp = async () => {
     if (otpinput == otp) {
 
-      const response = await axios.post('http://192.168.29.5:3000/api/login/token', {
+      const response = await axios.post(`${API_URL}/login/token`, {
         email : emailOrPhone,
+        otp : otpinput
       })
       const token = response.data?.token
       const stored = await storeToken(token);

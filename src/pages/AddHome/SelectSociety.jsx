@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {API_URL} from '@env'
 
 const SelectSociety = () => {
   const navigation = useNavigation();
@@ -25,7 +26,7 @@ const SelectSociety = () => {
     fetchSelectedCity();
   }, []);
   useEffect(() => {
-    axios.post('http://192.168.29.5:3000/api/societies/city', { city: selectedCity })
+    axios.post(`${API_URL}/societies/city`, { city: selectedCity })
       .then(response => {
         setSocieties(response.data);
       })
@@ -41,7 +42,7 @@ const SelectSociety = () => {
   const handleSocietySelect = (society) => {
     setSearchQuery(society.SocietyName);
     setDropdownVisible(false);
-    axios.post(`http://192.168.29.5:3000/api/blocks/societyid`,{
+    axios.post(`${API_URL}/blocks/societyid`,{
         societyid : society._id
     })
       .then(response => {
@@ -55,7 +56,7 @@ const SelectSociety = () => {
   const handleBuildingSelect = (building) => {
     setSelectedBuilding(building);
     setBuildingDropdownVisible(false);
-    axios.post('http://192.168.29.5:3000/api/units/blockid', {
+    axios.post(`${API_URL}/units/blockid`, {
       blockid: building._id
     })
       .then(response => {

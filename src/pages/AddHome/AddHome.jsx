@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {API_URL} from '@env'
 
 const AddHome = () => {
   const navigation = useNavigation();
@@ -11,7 +12,7 @@ const AddHome = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    axios.get('http://192.168.29.5:3000/api/societies/cities')
+    axios.get(`${API_URL}/societies/cities`)
       .then(response => {
         setCities(response.data);
       })

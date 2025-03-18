@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View, TextInput, Button } from 'react-native'
 import React, { useState } from 'react'
 import axios from 'axios'
-
+import {API_URL} from '@env'
 const Register = ({navigation}) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -16,7 +16,8 @@ const Register = ({navigation}) => {
         Phone : phone
       }
       console.log(datatosend)
-      const response = await axios.post('http://192.168.29.5:3000/api/Users', {
+      console.log(API_URL)
+      const response = await axios.post(`${API_URL}/users`, {
         Name: name,
         Email: email,
         Phone: phone
