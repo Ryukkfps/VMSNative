@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, TouchableOpacity, TextInput, FlatList } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, TextInput, FlatList, ScrollView } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
@@ -7,6 +7,9 @@ import { getToken } from '../../utils/dbStore'
 import {API_URL} from '@env'
 import { jwtDecode } from "jwt-decode";
 import Toast from 'react-native-toast-message';
+import Navbar from '../../components/Navbar/Navbar';
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 
 const SelectSociety = () => {
   const navigation = useNavigation();
@@ -143,7 +146,7 @@ const SelectSociety = () => {
     try {
       const token = await getToken();
       const decodedToken = jwtDecode(token);
-      const userId = decodedToken.userId; // Assuming the token contains a UserId field
+      const userId = decodedToken.userId;
       const homeData = {
         UserId: userId,
         SId: selectedSociety._id,
@@ -166,9 +169,8 @@ const SelectSociety = () => {
           Toast.show({
             type: 'error',
             text1: 'Error Adding Home',
-            text2: 'There was an error adding your home.',
+            text2: error.response?.data || 'An error occurred while adding home',
           });
-          console.error('Error adding home:', error);
         });
     } catch (error) {
       Toast.show({
@@ -176,130 +178,138 @@ const SelectSociety = () => {
         text1: 'Error',
         text2: 'Error decoding token or fetching user ID.',
       });
-      console.error('Error decoding token or fetching user ID:', error);
     }
   };
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={() => navigation.navigate('AddHome')} style={styles.dropdown}>
-        <Text style={styles.dropdownText}>{selectedCity}</Text>
-      </TouchableOpacity>
-      <TextInput
-        style={styles.input}
-        placeholder="Enter Society Name"
-        value={searchQuery}
-        onFocus={() => setDropdownVisible(true)}
-        onChangeText={setSearchQuery}
-      />
-      {dropdownVisible && (
-        <FlatList
-          data={filteredSocieties}
-          keyExtractor={(item) => item.SocietyName?.toString()}
-          renderItem={({ item }) => (
-            <TouchableOpacity style={styles.listItem} onPress={() => handleSocietySelect(item)}>
-              <Text style={styles.dropdownText}>{item.SocietyName}</Text>
-            </TouchableOpacity>
-          )}
+      <View style={styles.navBar}>
+        <TouchableOpacity onPress={() => navigation.navigate('AddHome')} style={styles.backButton}>
+          <FontAwesomeIcon icon={faArrowLeft} size={20} color="#000" />
+        </TouchableOpacity>
+        <Text style={styles.title}>Add Home</Text>
+      </View>
+
+      <ScrollView contentContainerStyle={styles.contentContainer}>
+        <TouchableOpacity onPress={() => navigation.navigate('AddHome')} style={styles.dropdown}>
+          <Text style={styles.dropdownText}>{selectedCity}</Text>
+        </TouchableOpacity>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter Society Name"
+          value={searchQuery}
+          onFocus={() => setDropdownVisible(true)}
+          onChangeText={setSearchQuery}
         />
-      )}
-
-      {buildings.length > 0 && (
-        <View>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter Building Name"
-            value={selectedBuilding ? selectedBuilding.BlockName : buildingSearchQuery}
-            onFocus={() => setBuildingDropdownVisible(true)}
-            onChangeText={setBuildingSearchQuery}
+        {dropdownVisible && (
+          <FlatList
+            data={filteredSocieties}
+            keyExtractor={(item) => item.SocietyName?.toString()}
+            renderItem={({ item }) => (
+              <TouchableOpacity style={styles.listItem} onPress={() => handleSocietySelect(item)}>
+                <Text style={styles.dropdownText}>{item.SocietyName}</Text>
+              </TouchableOpacity>
+            )}
           />
-          {buildingDropdownVisible && (
-            <FlatList
-              data={filteredBuildings}
-              keyExtractor={(item) => item.BlockName?.toString()}
-              renderItem={({ item }) => (
-                <TouchableOpacity style={styles.listItem} onPress={() => handleBuildingSelect(item)}>
-                  <Text style={styles.dropdownText}>{item.BlockName}</Text>
-                </TouchableOpacity>
-              )}
-            />
-          )}
-        </View>
-      )}
+        )}
 
-      {flats.length > 0 && (
-        <View>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter Flat Number"
-            value={selectedFlat ? selectedFlat.FlatNumber : flatSearchQuery}
-            onFocus={() => setFlatDropdownVisible(true)}
-            onChangeText={setFlatSearchQuery}
-          />
-          {flatDropdownVisible && (
-            <FlatList
-              data={filteredFlats}
-              keyExtractor={(item) => item.FlatNumber?.toString()}
-              renderItem={({ item }) => (
-                <TouchableOpacity style={styles.listItem} onPress={() => handleFlatSelect(item)}>
-                  <Text style={styles.dropdownText}>{item.FlatNumber}</Text>
-                </TouchableOpacity>
-              )}
+        {buildings.length > 0 && (
+          <View>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter Building Name"
+              value={selectedBuilding ? selectedBuilding.BlockName : buildingSearchQuery}
+              onFocus={() => setBuildingDropdownVisible(true)}
+              onChangeText={setBuildingSearchQuery}
             />
-          )}
-        </View>
-      )}
+            {buildingDropdownVisible && (
+              <FlatList
+                data={filteredBuildings}
+                keyExtractor={(item) => item.BlockName?.toString()}
+                renderItem={({ item }) => (
+                  <TouchableOpacity style={styles.listItem} onPress={() => handleBuildingSelect(item)}>
+                    <Text style={styles.dropdownText}>{item.BlockName}</Text>
+                  </TouchableOpacity>
+                )}
+              />
+            )}
+          </View>
+        )}
 
-      {selectedFlat && ownershipTypes.length > 0 && (
-        <View>
-          <TextInput
-            style={styles.input}
-            placeholder="Select Ownership Type"
-            value={selectedOwnershipType ? selectedOwnershipType.TypeName : ownershipSearchQuery}
-            onFocus={() => setOwnershipDropdownVisible(true)}
-            onChangeText={setOwnershipSearchQuery}
-          />
-          {ownershipDropdownVisible && (
-            <FlatList
-              data={filteredOwnershipTypes}
-              keyExtractor={(item) => item._id?.toString()}
-              renderItem={({ item }) => (
-                <TouchableOpacity style={styles.listItem} onPress={() => handleOwnershipSelect(item)}>
-                  <Text style={styles.dropdownText}>{item.TypeName}</Text>
-                </TouchableOpacity>
-              )}
+        {flats.length > 0 && (
+          <View>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter Flat Number"
+              value={selectedFlat ? selectedFlat.FlatNumber : flatSearchQuery}
+              onFocus={() => setFlatDropdownVisible(true)}
+              onChangeText={setFlatSearchQuery}
             />
-          )}
-        </View>
-      )}
+            {flatDropdownVisible && (
+              <FlatList
+                data={filteredFlats}
+                keyExtractor={(item) => item.FlatNumber?.toString()}
+                renderItem={({ item }) => (
+                  <TouchableOpacity style={styles.listItem} onPress={() => handleFlatSelect(item)}>
+                    <Text style={styles.dropdownText}>{item.FlatNumber}</Text>
+                  </TouchableOpacity>
+                )}
+              />
+            )}
+          </View>
+        )}
 
-      {selectedOwnershipType && occupancyStatuses.length > 0 && (
-        <View>
-          <TextInput
-            style={styles.input}
-            placeholder="Select Occupancy Status"
-            value={selectedOccupancyStatus ? selectedOccupancyStatus.OSName : occupancySearchQuery}
-            onFocus={() => setOccupancyDropdownVisible(true)}
-            onChangeText={setOccupancySearchQuery}
-          />
-          {occupancyDropdownVisible && (
-            <FlatList
-              data={filteredOccupancyStatuses}
-              keyExtractor={(item) => item._id?.toString()}
-              renderItem={({ item }) => (
-                <TouchableOpacity style={styles.listItem} onPress={() => handleOccupancySelect(item)}>
-                  <Text style={styles.dropdownText}>{item.OSName}</Text>
-                </TouchableOpacity>
-              )}
+        {selectedFlat && ownershipTypes.length > 0 && (
+          <View>
+            <TextInput
+              style={styles.input}
+              placeholder="Select Ownership Type"
+              value={selectedOwnershipType ? selectedOwnershipType.TypeName : ownershipSearchQuery}
+              onFocus={() => setOwnershipDropdownVisible(true)}
+              onChangeText={setOwnershipSearchQuery}
             />
-          )}
-          {selectedOccupancyStatus && (
-            <TouchableOpacity style={styles.addButton} onPress={handleAddHome}>
-              <Text style={styles.addButtonText}>Add Home</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      )}
+            {ownershipDropdownVisible && (
+              <FlatList
+                data={filteredOwnershipTypes}
+                keyExtractor={(item) => item._id?.toString()}
+                renderItem={({ item }) => (
+                  <TouchableOpacity style={styles.listItem} onPress={() => handleOwnershipSelect(item)}>
+                    <Text style={styles.dropdownText}>{item.TypeName}</Text>
+                  </TouchableOpacity>
+                )}
+              />
+            )}
+          </View>
+        )}
+
+        {selectedOwnershipType && occupancyStatuses.length > 0 && (
+          <View>
+            <TextInput
+              style={styles.input}
+              placeholder="Select Occupancy Status"
+              value={selectedOccupancyStatus ? selectedOccupancyStatus.OSName : occupancySearchQuery}
+              onFocus={() => setOccupancyDropdownVisible(true)}
+              onChangeText={setOccupancySearchQuery}
+            />
+            {occupancyDropdownVisible && (
+              <FlatList
+                data={filteredOccupancyStatuses}
+                keyExtractor={(item) => item._id?.toString()}
+                renderItem={({ item }) => (
+                  <TouchableOpacity style={styles.listItem} onPress={() => handleOccupancySelect(item)}>
+                    <Text style={styles.dropdownText}>{item.OSName}</Text>
+                  </TouchableOpacity>
+                )}
+              />
+            )}
+            {selectedOccupancyStatus && (
+              <TouchableOpacity style={styles.addButton} onPress={handleAddHome}>
+                <Text style={styles.addButtonText}>Add Home</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+      </ScrollView>
     </View>
   );
 };
@@ -308,6 +318,24 @@ export default SelectSociety;
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  navBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+  },
+  backButton: {
+    marginRight: 16,
+    padding: 5,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  contentContainer: {
     padding: 16,
   },
   dropdown: {

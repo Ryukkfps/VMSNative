@@ -6,6 +6,7 @@ import Register from '../pages/Register/Register';
 import HomePage from '../pages/HomePage/HomePage';
 import AddHome from '../pages/AddHome/AddHome';
 import SelectSociety from '../pages/AddHome/SelectSociety';
+import Notifications from '../pages/Notifications/Notifications'
 const Stack = createNativeStackNavigator();
 
 const AppNavigator = () => {
@@ -25,6 +26,7 @@ const AppNavigator = () => {
         <Stack.Screen name="Home" component={HomePage} />
         <Stack.Screen name="AddHome" component={AddHome} />
         <Stack.Screen name="SelectSociety" component={SelectSociety} />
+        <Stack.Screen name="Notifications" component={Notifications} />
 
       </Stack.Navigator>
     </NavigationContainer>

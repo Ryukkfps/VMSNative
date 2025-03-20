@@ -3,6 +3,7 @@ import React, { useState } from 'react'
 import axios from 'axios'
 import { storeToken, getToken } from '../../utils/dbStore';
 import {API_URL} from '@env'
+import Toast from 'react-native-toast-message';
 
 const Login = ({navigation}) => {
   const [emailOrPhone, setEmailOrPhone] = useState('')
@@ -11,35 +12,79 @@ const Login = ({navigation}) => {
   const [isOtpSent, setIsOtpSent] = useState(false)
 
   const handleSendOtp = async () => {
-    try{
-      const datatosend = {
-        email : emailOrPhone
+    try {
+      if (!emailOrPhone) {
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'Please enter email or phone number',
+        });
+        return;
       }
-      const response = await axios.post(`${API_URL}/login/sentemailloginotp`,datatosend);
-      console.log(response.data)
+
+      const datatosend = {
+        email: emailOrPhone
+      }
+      const response = await axios.post(`${API_URL}/login/sentemailloginotp`, datatosend);
       setOtp(response.data?.EmailOTP)
       setIsOtpSent(true)
-      alert('OTP sent successfully')
-    }catch(error){
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'OTP sent successfully',
+      });
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: error.response?.data?.message || 'Failed to send OTP',
+      });
       console.log(error)
     }
   };
 
   const handleVerifyOtp = async () => {
-    if (otpinput == otp) {
+    try {
+      if (!otpinput) {
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'Please enter OTP',
+        });
+        return;
+      }
 
-      const response = await axios.post(`${API_URL}/login/token`, {
-        email : emailOrPhone,
-        otp : otpinput
-      })
-      const token = response.data?.token
-      const stored = await storeToken(token);
-      alert('OTP verified successfully')
-      navigation.navigate('Home')
-    } else {
-      alert('Invalid OTP')
+      if (otpinput == otp) {
+        const response = await axios.post(`${API_URL}/login/token`, {
+          email: emailOrPhone,
+          otp: otpinput
+        })
+        const token = response.data?.token
+        console.log(token)
+        const stored = await storeToken(token);
+        
+        Toast.show({
+          type: 'success',
+          text1: 'Success',
+          text2: 'Login successful',
+        });
+        
+        navigation.navigate('Home')
+      } else {
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'Invalid OTP',
+        });
+      }
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: error.response?.data?.message || 'Failed to verify OTP',
+      });
+      console.log(error)
     }
-    // Navigate to the main application screen upon successful verification
   }
 
   return (

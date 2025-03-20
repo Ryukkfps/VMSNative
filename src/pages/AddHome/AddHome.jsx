@@ -4,6 +4,8 @@ import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {API_URL} from '@env'
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import { faArrowLeft, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 const AddHome = () => {
   const navigation = useNavigation();
@@ -12,6 +14,7 @@ const AddHome = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
+    console.log(`${API_URL}/societies/cities`)
     axios.get(`${API_URL}/societies/cities`)
       .then(response => {
         setCities(response.data);
@@ -39,11 +42,11 @@ const AddHome = () => {
       <View style={styles.navBar}>
         {searchActive ? (
           <TouchableOpacity onPress={() => { setSearchActive(false); setSearchQuery(''); }} style={styles.backButton}>
-            <Text style={styles.backButtonText}>X</Text>
+            <FontAwesomeIcon icon={faTimes} size={20} color="#000" />
           </TouchableOpacity>
         ) : (
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Text style={styles.backButtonText}>{'<'}</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('Home')} style={styles.backButton}>
+            <FontAwesomeIcon icon={faArrowLeft} size={20} color="#000" />
           </TouchableOpacity>
         )}
         {searchActive ? (
@@ -56,7 +59,7 @@ const AddHome = () => {
           />
         ) : (
           <TouchableOpacity onPress={() => setSearchActive(true)} style={styles.searchButton}>
-            <Text style={styles.searchButtonText}>🔍</Text>
+            <FontAwesomeIcon icon={faSearch} size={20} color="#000" />
           </TouchableOpacity>
         )}
         <Text style={styles.title}>Select City</Text>
@@ -94,15 +97,11 @@ const styles = StyleSheet.create({
   },
   backButton: {
     marginRight: 16,
-  },
-  backButtonText: {
-    fontSize: 24,
+    padding: 5,
   },
   searchButton: {
     marginRight: 16,
-  },
-  searchButtonText: {
-    fontSize: 24,
+    padding: 5,
   },
   searchInput: {
     flex: 1,
