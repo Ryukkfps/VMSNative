@@ -26,7 +26,8 @@ const HomePage = () => {
 const styles = StyleSheet.create({
   cardContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginTop: 20,
   },
   card: {

@@ -3,7 +3,10 @@ import React, { useEffect, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getToken } from '../../utils/dbStore'
 import {API_URL} from '@env'
+import { jwtDecode } from "jwt-decode";
+import Toast from 'react-native-toast-message';
 
 const SelectSociety = () => {
   const navigation = useNavigation();
@@ -17,6 +20,17 @@ const SelectSociety = () => {
   const [flats, setFlats] = useState([]);
   const [selectedFlat, setSelectedFlat] = useState(null);
   const [flatDropdownVisible, setFlatDropdownVisible] = useState(false);
+  const [buildingSearchQuery, setBuildingSearchQuery] = useState('');
+  const [flatSearchQuery, setFlatSearchQuery] = useState('');
+  const [ownershipTypes, setOwnershipTypes] = useState([]);
+  const [selectedOwnershipType, setSelectedOwnershipType] = useState(null);
+  const [ownershipDropdownVisible, setOwnershipDropdownVisible] = useState(false);
+  const [ownershipSearchQuery, setOwnershipSearchQuery] = useState('');
+  const [occupancyStatuses, setOccupancyStatuses] = useState([]);
+  const [selectedOccupancyStatus, setSelectedOccupancyStatus] = useState(null);
+  const [occupancyDropdownVisible, setOccupancyDropdownVisible] = useState(false);
+  const [occupancySearchQuery, setOccupancySearchQuery] = useState('');
+  const [selectedSociety, setSelectedSociety] = useState(null);
 
   useEffect(() => {
     const fetchSelectedCity = async () => {
@@ -39,7 +53,16 @@ const SelectSociety = () => {
     society.SocietyName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const filteredBuildings = buildings.filter(building =>
+    building.BlockName.toLowerCase().includes(buildingSearchQuery.toLowerCase())
+  );
+
+  const filteredFlats = flats.filter(flat =>
+    flat.FlatNumber.toLowerCase().includes(flatSearchQuery.toLowerCase())
+  );
+
   const handleSocietySelect = (society) => {
+    setSelectedSociety(society);
     setSearchQuery(society.SocietyName);
     setDropdownVisible(false);
     axios.post(`${API_URL}/blocks/societyid`,{
@@ -70,6 +93,91 @@ const SelectSociety = () => {
   const handleFlatSelect = (flat) => {
     setSelectedFlat(flat);
     setFlatDropdownVisible(false);
+    // Fetch ownership types when flat is selected
+    axios.get(`${API_URL}/ownership-types`)
+      .then(response => {
+        setOwnershipTypes(response.data);
+      })
+      .catch(error => {
+        console.error('Error fetching ownership types:', error);
+      });
+  };
+
+  const filteredOwnershipTypes = ownershipTypes.filter(type =>
+    type.TypeName.toLowerCase().includes(ownershipSearchQuery.toLowerCase())
+  );
+
+  const handleOwnershipSelect = (ownershipType) => {
+    setSelectedOwnershipType(ownershipType);
+    setOwnershipDropdownVisible(false);
+    // Fetch occupancy statuses when ownership type is selected
+    axios.get(`${API_URL}/occupancy-statuses/ownershiptype/${ownershipType._id}`)
+      .then(response => {
+        console.log(response.data)
+        setOccupancyStatuses(response.data);
+      })
+      .catch(error => {
+        console.error('Error fetching occupancy statuses:', error);
+      });
+  };
+
+  const filteredOccupancyStatuses = occupancyStatuses.filter(status =>
+    status.OSName.toLowerCase().includes(occupancySearchQuery.toLowerCase())
+  );
+
+  const handleOccupancySelect = (occupancyStatus) => {
+    setSelectedOccupancyStatus(occupancyStatus);
+    setOccupancyDropdownVisible(false);
+  };
+
+  const handleAddHome = async () => {
+    if (!selectedSociety || !selectedBuilding || !selectedFlat || !selectedOwnershipType || !selectedOccupancyStatus) {
+      Toast.show({
+        type: 'error',
+        text1: 'Incomplete Selection',
+        text2: 'Please select all required fields.',
+      });
+      return;
+    }
+
+    try {
+      const token = await getToken();
+      const decodedToken = jwtDecode(token);
+      const userId = decodedToken.userId; // Assuming the token contains a UserId field
+      const homeData = {
+        UserId: userId,
+        SId: selectedSociety._id,
+        BId: selectedBuilding._id,
+        UId: selectedFlat._id,
+        OwnershipType: selectedOwnershipType._id,
+        OccupancyStatus: selectedOccupancyStatus._id,
+      };
+
+      axios.post(`${API_URL}/homes`, homeData)
+        .then(response => {
+          Toast.show({
+            type: 'success',
+            text1: 'Home Added',
+            text2: 'Your home has been added successfully.',
+          });
+          navigation.navigate('Home');
+        })
+        .catch(error => {
+          Toast.show({
+            type: 'error',
+            text1: 'Error Adding Home',
+            text2: 'There was an error adding your home.',
+          });
+          console.error('Error adding home:', error);
+        });
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Error decoding token or fetching user ID.',
+      });
+      console.error('Error decoding token or fetching user ID:', error);
+    }
   };
 
   return (
@@ -95,14 +203,19 @@ const SelectSociety = () => {
           )}
         />
       )}
+
       {buildings.length > 0 && (
         <View>
-          <TouchableOpacity onPress={() => setBuildingDropdownVisible(!buildingDropdownVisible)} style={styles.dropdown}>
-            <Text style={styles.dropdownText}>{selectedBuilding ? selectedBuilding.BlockName : 'Select Building'}</Text>
-          </TouchableOpacity>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter Building Name"
+            value={selectedBuilding ? selectedBuilding.BlockName : buildingSearchQuery}
+            onFocus={() => setBuildingDropdownVisible(true)}
+            onChangeText={setBuildingSearchQuery}
+          />
           {buildingDropdownVisible && (
             <FlatList
-              data={buildings}
+              data={filteredBuildings}
               keyExtractor={(item) => item.BlockName?.toString()}
               renderItem={({ item }) => (
                 <TouchableOpacity style={styles.listItem} onPress={() => handleBuildingSelect(item)}>
@@ -113,14 +226,19 @@ const SelectSociety = () => {
           )}
         </View>
       )}
+
       {flats.length > 0 && (
         <View>
-          <TouchableOpacity onPress={() => setFlatDropdownVisible(!flatDropdownVisible)} style={styles.dropdown}>
-            <Text style={styles.dropdownText}>{selectedFlat ? selectedFlat.FlatNumber : 'Select Flat Number'}</Text>
-          </TouchableOpacity>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter Flat Number"
+            value={selectedFlat ? selectedFlat.FlatNumber : flatSearchQuery}
+            onFocus={() => setFlatDropdownVisible(true)}
+            onChangeText={setFlatSearchQuery}
+          />
           {flatDropdownVisible && (
             <FlatList
-              data={flats}
+              data={filteredFlats}
               keyExtractor={(item) => item.FlatNumber?.toString()}
               renderItem={({ item }) => (
                 <TouchableOpacity style={styles.listItem} onPress={() => handleFlatSelect(item)}>
@@ -128,6 +246,57 @@ const SelectSociety = () => {
                 </TouchableOpacity>
               )}
             />
+          )}
+        </View>
+      )}
+
+      {selectedFlat && ownershipTypes.length > 0 && (
+        <View>
+          <TextInput
+            style={styles.input}
+            placeholder="Select Ownership Type"
+            value={selectedOwnershipType ? selectedOwnershipType.TypeName : ownershipSearchQuery}
+            onFocus={() => setOwnershipDropdownVisible(true)}
+            onChangeText={setOwnershipSearchQuery}
+          />
+          {ownershipDropdownVisible && (
+            <FlatList
+              data={filteredOwnershipTypes}
+              keyExtractor={(item) => item._id?.toString()}
+              renderItem={({ item }) => (
+                <TouchableOpacity style={styles.listItem} onPress={() => handleOwnershipSelect(item)}>
+                  <Text style={styles.dropdownText}>{item.TypeName}</Text>
+                </TouchableOpacity>
+              )}
+            />
+          )}
+        </View>
+      )}
+
+      {selectedOwnershipType && occupancyStatuses.length > 0 && (
+        <View>
+          <TextInput
+            style={styles.input}
+            placeholder="Select Occupancy Status"
+            value={selectedOccupancyStatus ? selectedOccupancyStatus.OSName : occupancySearchQuery}
+            onFocus={() => setOccupancyDropdownVisible(true)}
+            onChangeText={setOccupancySearchQuery}
+          />
+          {occupancyDropdownVisible && (
+            <FlatList
+              data={filteredOccupancyStatuses}
+              keyExtractor={(item) => item._id?.toString()}
+              renderItem={({ item }) => (
+                <TouchableOpacity style={styles.listItem} onPress={() => handleOccupancySelect(item)}>
+                  <Text style={styles.dropdownText}>{item.OSName}</Text>
+                </TouchableOpacity>
+              )}
+            />
+          )}
+          {selectedOccupancyStatus && (
+            <TouchableOpacity style={styles.addButton} onPress={handleAddHome}>
+              <Text style={styles.addButtonText}>Add Home</Text>
+            </TouchableOpacity>
           )}
         </View>
       )}
@@ -168,5 +337,16 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginVertical: 16,
+  },
+  addButton: {
+    padding: 12,
+    backgroundColor: '#007BFF',
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  addButtonText: {
+    color: '#fff',
+    fontSize: 16,
   },
 });
