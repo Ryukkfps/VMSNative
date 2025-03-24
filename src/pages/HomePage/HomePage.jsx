@@ -16,7 +16,7 @@ const HomePage = () => {
         {/* <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('AddHome')}>
           <Text style={styles.cardText}>Add Home</Text>
         </TouchableOpacity> */}
-        <TouchableOpacity style={styles.card} onPress={() => console.log('Pre-Approve Entry pressed')}>
+        <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('PreApproved')}>
           <Text style={styles.cardText}>Pre-Approve Entry</Text>
         </TouchableOpacity>
       </View>
