@@ -6,11 +6,14 @@ import {
   TouchableOpacity,
   Share,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import DropDownPicker from 'react-native-dropdown-picker';
 import {API_URL} from '@env';
 import axios from 'axios';
 import Toast from 'react-native-toast-message';
+import {getToken} from '../../utils/dbStore';
+import {jwtDecode} from 'jwt-decode';
+import DatePicker from 'react-native-date-picker';
 
 const PreApproved = () => {
   const [formData, setFormData] = useState({
@@ -18,6 +21,8 @@ const PreApproved = () => {
     TimeSpanValue: '',
     TimeSpanUnit: 'hours',
   });
+
+  const [date, setDate] = useState(new Date());
 
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState([
@@ -30,12 +35,21 @@ const PreApproved = () => {
   const [passcodeRec, setPasscodeRec] = useState(false);
   const [passcode, setPasscode] = useState('');
 
+  useEffect(() => {
+    console.log('TimeSpanUnit:', formData.TimeSpanUnit);
+  }, [formData.TimeSpanUnit]);
+
+
   const handleSubmit = async () => {
     try {
+      const token = await getToken();
+      const decodedToken = jwtDecode(token);
+      const userId = decodedToken.userId;
       let minutes = parseInt(formData.TimeSpanValue);
       switch (formData.TimeSpanUnit) {
         case 'minutes':
           minutes *= 1;
+          break;
         case 'hours':
           minutes *= 60;
           break;
@@ -50,9 +64,12 @@ const PreApproved = () => {
       const submitData = {
         Name: formData.Name,
         TimeSpan: timeSpan,
+        UserId: userId,
+        DateTime : date,
       };
+      console.log(date.getDate)
+      console.log(submitData);
 
-      console.log(`${API_URL}/entry-permits`);
       const response = await axios.post(
         `${API_URL}/entry-permits`,
         submitData,
@@ -112,6 +129,7 @@ Please Share it at the gate with the guard`,
         onChangeText={text => setFormData({...formData, Name: text})}
       />
 
+      <DatePicker date={date} onDateChange={setDate} />
       <Text style={styles.label}>Time Duration</Text>
       <View style={styles.timeSpanContainer}>
         <TextInput
