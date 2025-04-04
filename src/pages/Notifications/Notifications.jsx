@@ -1,43 +1,47 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, FlatList } from 'react-native';
-import io from 'socket.io-client';
-import {SERVER_URL} from '@env'
+import { StyleSheet, Text, View, FlatList, Alert } from 'react-native';
+import messaging from '@react-native-firebase/messaging';
 
 const Notifications = () => {
   const [notifications, setNotifications] = useState([]);
 
   useEffect(() => {
-    // Connect to the Socket.IO server
-    const socket = io(`${SERVER_URL}`); // Replace with your server's IP address
+    // Foreground notification listener
+    const unsubscribe = messaging().onMessage(async remoteMessage => {
+      console.log('FCM Notification received in foreground:', remoteMessage);
+      
+      if (remoteMessage?.notification) {
+        const newNotification = {
+          id: remoteMessage.messageId || Date.now().toString(),
+          title: remoteMessage.notification.title || 'New Notification',
+          body: remoteMessage.notification.body || '',
+          type: remoteMessage.data?.type || 'request',
+          userId: remoteMessage.data?.userId || 'Unknown',
+          status: remoteMessage.data?.status || 'Pending',
+        };
 
-    // Listen for entry requests
-    socket.on('entryRequest', (data) => {
-      console.log('Entry request received:', data);
-      setNotifications((prevNotifications) => [
-        ...prevNotifications,
-        { type: 'request', ...data },
-      ]);
+        setNotifications(prevNotifications => [newNotification, ...prevNotifications]);
+      }
     });
 
-    // Listen for entry responses
-    socket.on('entryResponse', (data) => {
-      console.log('Entry response received:', data);
-      setNotifications((prevNotifications) => [
-        ...prevNotifications,
-        { type: 'response', ...data },
-      ]);
-    });
+    // Handle notifications when the app is opened from a background state
+    messaging()
+      .getInitialNotification()
+      .then(remoteMessage => {
+        if (remoteMessage) {
+          console.log('Notification opened from quit state:', remoteMessage);
+          Alert.alert(remoteMessage.notification.title, remoteMessage.notification.body);
+        }
+      });
 
-    // Clean up the effect
-    return () => {
-      socket.disconnect();
-    };
+    return () => unsubscribe();
   }, []);
 
   const renderNotification = ({ item }) => {
     return (
       <View style={styles.notification}>
-        <Text>{item.type === 'request' ? 'Entry Request' : 'Entry Response'}</Text>
+        <Text style={styles.title}>{item.title}</Text>
+        <Text>{item.body}</Text>
         <Text>{item.type === 'request' ? `User ID: ${item.userId}` : `Status: ${item.status}`}</Text>
       </View>
     );
@@ -49,7 +53,7 @@ const Notifications = () => {
       <FlatList
         data={notifications}
         renderItem={renderNotification}
-        keyExtractor={(item, index) => index.toString()}
+        keyExtractor={(item) => item.id}
       />
     </View>
   );
@@ -62,12 +66,17 @@ const styles = StyleSheet.create({
   },
   header: {
     fontSize: 24,
+    fontWeight: 'bold',
     marginBottom: 16,
   },
   notification: {
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#ccc',
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });
 

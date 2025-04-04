@@ -1,16 +1,25 @@
-import { StyleSheet, Text, View, TextInput, TouchableOpacity } from 'react-native'
-import React, { useState } from 'react'
-import axios from 'axios'
-import { storeToken, getToken } from '../../utils/dbStore';
-import {API_URL} from '@env'
+import {
+  StyleSheet,
+  Text,
+  View,
+  TextInput,
+  TouchableOpacity,
+} from 'react-native';
+import React, {useState} from 'react';
+import axios from 'axios';
+import {storeToken} from '../../utils/dbStore';
+import {API_URL} from '@env';
 import Toast from 'react-native-toast-message';
+import {sendFcmTokenToBackend} from '../../../firebaseConfig';
+import {jwtDecode} from 'jwt-decode';
 
 const Login = ({navigation}) => {
-  const [emailOrPhone, setEmailOrPhone] = useState('')
-  const [otp, setOtp] = useState('')
-  const [otpinput, setOtpinput] = useState('')
-  const [isOtpSent, setIsOtpSent] = useState(false)
+  const [emailOrPhone, setEmailOrPhone] = useState('');
+  const [otp, setOtp] = useState('');
+  const [otpinput, setOtpinput] = useState('');
+  const [isOtpSent, setIsOtpSent] = useState(false);
 
+  // Function to send OTP
   const handleSendOtp = async () => {
     try {
       if (!emailOrPhone) {
@@ -22,16 +31,16 @@ const Login = ({navigation}) => {
         return;
       }
 
-      const datatosend = {
-        email: emailOrPhone
-      }
-      const response = await axios.post(`${API_URL}/login/sentemailloginotp`, datatosend);
-      setOtp(response.data?.EmailOTP)
-      setIsOtpSent(true)
+      const response = await axios.post(`${API_URL}/login/sentemailloginotp`, {
+        email: emailOrPhone,
+      });
+      console.log(response.data?.EmailOTP)
+      setOtp(response.data?.EmailOTP);
+      setIsOtpSent(true);
       Toast.show({
         type: 'success',
-        text1: 'Success',
-        text2: 'OTP sent successfully',
+        text1: 'OTP Sent',
+        text2: 'Please check your email/phone.',
       });
     } catch (error) {
       Toast.show({
@@ -39,10 +48,11 @@ const Login = ({navigation}) => {
         text1: 'Error',
         text2: error.response?.data?.message || 'Failed to send OTP',
       });
-      console.log(error)
+      console.error('Send OTP Error:', error);
     }
   };
 
+  // Function to verify OTP and login
   const handleVerifyOtp = async () => {
     try {
       if (!otpinput) {
@@ -53,23 +63,39 @@ const Login = ({navigation}) => {
         });
         return;
       }
-
+      console.log(otpinput)
       if (otpinput == otp) {
         const response = await axios.post(`${API_URL}/login/token`, {
           email: emailOrPhone,
-          otp: otpinput
-        })
-        const token = response.data?.token
-        console.log(token)
-        const stored = await storeToken(token);
-        
-        Toast.show({
-          type: 'success',
-          text1: 'Success',
-          text2: 'Login successful',
+          otp: otpinput,
         });
-        
-        navigation.navigate('Home')
+
+        const token = response.data?.token;
+        console.log(token)
+        const decodedToken = jwtDecode(token);
+        const userId = decodedToken.userId;
+        console.log(userId)
+
+        if (token && userId) {
+          await storeToken(token);
+          Toast.show({
+            type: 'success',
+            text1: 'Login Successful',
+            text2: 'Welcome back!',
+          });
+
+          // Send FCM Token to the backend
+          await sendFcmTokenToBackend(userId);
+
+          // Navigate to Home Screen
+          navigation.navigate('Home');
+        } else {
+          Toast.show({
+            type: 'error',
+            text1: 'Login Failed',
+            text2: 'Invalid response from server',
+          });
+        }
       } else {
         Toast.show({
           type: 'error',
@@ -83,14 +109,14 @@ const Login = ({navigation}) => {
         text1: 'Error',
         text2: error.response?.data?.message || 'Failed to verify OTP',
       });
-      console.log(error)
+      console.error('Verify OTP Error:', error);
     }
-  }
+  };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Login</Text>
-      
+
       {!isOtpSent ? (
         <>
           <TextInput
@@ -113,21 +139,24 @@ const Login = ({navigation}) => {
             onChangeText={setOtpinput}
             keyboardType="numeric"
           />
-          <TouchableOpacity style={styles.loginButton} onPress={handleVerifyOtp}>
-            <Text style={styles.buttonText}>Verify OTP</Text> 
+          <TouchableOpacity
+            style={styles.loginButton}
+            onPress={handleVerifyOtp}>
+            <Text style={styles.buttonText}>Verify OTP</Text>
           </TouchableOpacity>
         </>
       )}
 
-      <TouchableOpacity style={styles.registerButton}
-      onPress={() => navigation.navigate('Register')}>
+      <TouchableOpacity
+        style={styles.registerButton}
+        onPress={() => navigation.navigate('Register')}>
         <Text style={styles.buttonText}>Register</Text>
       </TouchableOpacity>
     </View>
-  )
-}
+  );
+};
 
-export default Login
+export default Login;
 
 const styles = StyleSheet.create({
   container: {
@@ -170,4 +199,4 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-})
+});

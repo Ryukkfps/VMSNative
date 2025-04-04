@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "629657647871",
+    "project_id": "visitormanagementsystem-627ed",
+    "storage_bucket": "visitormanagementsystem-627ed.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:629657647871:android:b978bd41e164d36050eaca",
+        "android_client_info": {
+          "package_name": "com.myvisitorsapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBBQpHglVJrlSuWUhlG1SyYewo3mT8xyEg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
