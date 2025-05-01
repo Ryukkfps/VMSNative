@@ -23,6 +23,7 @@ export const getToken = async () => {
 export const removeToken = async () => {
   try {
     await AsyncStorage.removeItem('userToken');
+    await AsyncStorage.removeItem('fcmToken');
     return true;
   } catch (error) {
     console.error('Error removing token:', error);

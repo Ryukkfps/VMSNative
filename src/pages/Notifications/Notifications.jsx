@@ -1,48 +1,42 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, FlatList, Alert } from 'react-native';
-import messaging from '@react-native-firebase/messaging';
+import React, {useEffect, useState} from 'react';
+import {StyleSheet, Text, View, FlatList} from 'react-native';
+import axios from 'axios';
+import {API_URL} from '@env';
+import {jwtDecode} from 'jwt-decode';
+import {getToken} from '../../utils/dbStore';
+// Optionally import a date formatting library
+// import { format } from 'date-fns';
 
 const Notifications = () => {
   const [notifications, setNotifications] = useState([]);
 
   useEffect(() => {
-    // Foreground notification listener
-    const unsubscribe = messaging().onMessage(async remoteMessage => {
-      console.log('FCM Notification received in foreground:', remoteMessage);
-      
-      if (remoteMessage?.notification) {
-        const newNotification = {
-          id: remoteMessage.messageId || Date.now().toString(),
-          title: remoteMessage.notification.title || 'New Notification',
-          body: remoteMessage.notification.body || '',
-          type: remoteMessage.data?.type || 'request',
-          userId: remoteMessage.data?.userId || 'Unknown',
-          status: remoteMessage.data?.status || 'Pending',
-        };
+    const fetchNotifications = async () => {
+      try {
+        const token = await getToken();
+        const decodedToken = jwtDecode(token);
+        const user = decodedToken.userId;
 
-        setNotifications(prevNotifications => [newNotification, ...prevNotifications]);
+        const response = await axios.get(
+          `${API_URL}/notifications/user/${user}`,
+        );
+        setNotifications(response.data);
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
       }
-    });
+    };
 
-    // Handle notifications when the app is opened from a background state
-    messaging()
-      .getInitialNotification()
-      .then(remoteMessage => {
-        if (remoteMessage) {
-          console.log('Notification opened from quit state:', remoteMessage);
-          Alert.alert(remoteMessage.notification.title, remoteMessage.notification.body);
-        }
-      });
-
-    return () => unsubscribe();
+    // Fetch notifications when the component mounts
+    fetchNotifications();
   }, []);
 
-  const renderNotification = ({ item }) => {
+  const renderNotification = ({item}) => {
     return (
       <View style={styles.notification}>
-        <Text style={styles.title}>{item.title}</Text>
-        <Text>{item.body}</Text>
-        <Text>{item.type === 'request' ? `User ID: ${item.userId}` : `Status: ${item.status}`}</Text>
+        <Text style={styles.title}>{item.NotificationTitle}</Text>
+        <Text>{item.NotificationBody}</Text>
+        {/* Optionally format the date */}
+        {/* <Text>{format(new Date(item.createdAt), 'PPpp')}</Text> */}
       </View>
     );
   };
@@ -53,7 +47,7 @@ const Notifications = () => {
       <FlatList
         data={notifications}
         renderItem={renderNotification}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item._id}
       />
     </View>
   );
