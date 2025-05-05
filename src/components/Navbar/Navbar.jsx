@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View, TouchableOpacity, FlatList, Dimensions } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faBuilding, faUserCircle, faBell } from '@fortawesome/free-solid-svg-icons';
+import { faBuilding, faUserCircle, faBell, faCheck } from '@fortawesome/free-solid-svg-icons';
 import { getToken, removeToken } from '../../utils/dbStore';
 import { jwtDecode } from "jwt-decode";
 import axios from 'axios';
@@ -15,6 +15,7 @@ const Navbar = () => {
   const [profileDropdownVisible, setProfileDropdownVisible] = useState(false);
   const [userHomes, setUserHomes] = useState([]);
   const [userData, setUserData] = useState(null);
+  const [selectedHomeId, setSelectedHomeId] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -22,22 +23,54 @@ const Navbar = () => {
         const token = await getToken();
         const decodedToken = jwtDecode(token);
         const userId = decodedToken.userId;
+        
+        // Get selected home from AsyncStorage
+        const storedHomeId = await AsyncStorage.getItem('selectedHomeId');
+        if (storedHomeId) {
+          setSelectedHomeId(storedHomeId);
+        }
 
-        // Fetch both user data and homes data in parallel
-        const [userResponse, homesResponse] = await Promise.all([
-          axios.get(`${API_URL}/users/${userId}`),
-          axios.get(`${API_URL}/homes/user/${userId}`)
-        ]);
-
-        setUserData(userResponse.data);
-        setUserHomes(homesResponse.data);
+        // Fetch user data and homes data separately to handle errors independently
+        try {
+          const userResponse = await axios.get(`${API_URL}/users/${userId}`);
+          setUserData(userResponse.data);
+        } catch (userError) {
+          console.error('Error fetching user data:', userError);
+        }
+        
+        try {
+          const homesResponse = await axios.get(`${API_URL}/homes/user/${userId}`);
+          setUserHomes(homesResponse.data || []);
+          
+          // If no home is selected yet but homes exist, select the first one
+          if (!storedHomeId && homesResponse.data && homesResponse.data.length > 0) {
+            const firstHomeId = homesResponse.data[0]._id;
+            if (firstHomeId) { // Add check to ensure firstHomeId is not undefined
+              setSelectedHomeId(firstHomeId);
+              await AsyncStorage.setItem('selectedHomeId', firstHomeId);
+            }
+          }
+        } catch (homesError) {
+          console.error('Error fetching homes data:', homesError);
+          setUserHomes([]);
+        }
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error('Error decoding token:', error);
       }
     };
 
     fetchData();
   }, []); // Only run on component mount
+
+  const handleHomeSelect = async (homeId) => {
+    if (homeId) { // Add check to ensure homeId is not undefined
+      setSelectedHomeId(homeId);
+      await AsyncStorage.setItem('selectedHomeId', homeId);
+      setBuildingDropdownVisible(false);
+    } else {
+      console.warn('Attempted to select undefined homeId');
+    }
+  };
 
   const toggleBuildingDropdown = () => {
     setBuildingDropdownVisible(!buildingDropdownVisible);
@@ -76,15 +109,25 @@ const Navbar = () => {
   };
 
   const renderHomeItem = ({ item }) => (
-    <View style={styles.homeItem}>
-      <Text style={styles.societyName}>{item.Society}</Text>
-      <Text style={styles.homeDetails}>
-        {item.Block} - {item.Unit}
-      </Text>
-      <Text style={styles.homeType}>
-        {item.OwnershipType} • {item.OccupancyStatus}
-      </Text>
-    </View>
+    <TouchableOpacity 
+      style={[styles.homeItem, selectedHomeId === item._id && styles.selectedHomeItem]} 
+      onPress={() => handleHomeSelect(item._id)}
+    >
+      <View style={styles.homeItemContent}>
+        <View>
+          <Text style={styles.societyName}>{item.Society}</Text>
+          <Text style={styles.homeDetails}>
+            {item.Block} - {item.Unit}
+          </Text>
+          <Text style={styles.homeType}>
+            {item.OwnershipType} • {item.OccupancyStatus}
+          </Text>
+        </View>
+        {selectedHomeId === item._id && (
+          <FontAwesomeIcon icon={faCheck} size={16} color="#007AFF" />
+        )}
+      </View>
+    </TouchableOpacity>
   );
 
   return (
@@ -232,6 +275,15 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
   },
+  selectedHomeItem: {
+    backgroundColor: '#f0f8ff',
+  },
+  homeItemContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+  },
   societyName: {
     fontSize: 16,
     fontWeight: 'bold',
@@ -310,3 +362,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
+
+
+

@@ -12,7 +12,7 @@ const Register = ({navigation}) => {
 
       const datatosend = {
         Name : name,
-        Email : email,
+        Email : email, 
         Phone : phone
       }
       console.log(datatosend)
