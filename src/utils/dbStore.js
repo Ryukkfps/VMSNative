@@ -24,9 +24,31 @@ export const removeToken = async () => {
   try {
     await AsyncStorage.removeItem('userToken');
     await AsyncStorage.removeItem('fcmToken');
+    await AsyncStorage.removeItem('userRole');
     return true;
   } catch (error) {
     console.error('Error removing token:', error);
     return false;
   }
 };
+
+export const storeUserRole = async (role) => {
+  try {
+    await AsyncStorage.setItem('userRole', role);
+    return true;
+  } catch (error) {
+    console.error('Error storing user role:', error);
+    return false;
+  }
+};
+
+export const getUserRole = async () => {
+  try {
+    const role = await AsyncStorage.getItem('userRole');
+    return role;
+  } catch (error) {
+    console.error('Error getting user role:', error);
+    return null;
+  }
+};
+

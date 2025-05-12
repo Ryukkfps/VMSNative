@@ -1,24 +1,43 @@
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native'
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import Navbar from '../../components/Navbar/Navbar'
-import { getToken } from '../../utils/dbStore'
+import { getToken, getUserRole } from '../../utils/dbStore'
 import { useNavigation } from '@react-navigation/native'
 
-
 const HomePage = () => {
-  const token = getToken();
+  const [token, setToken] = useState(null);
+  const [userRole, setUserRole] = useState(null);
   const navigation = useNavigation();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const userToken = await getToken();
+        const role = await getUserRole();
+        
+        setToken(userToken);
+        setUserRole(role);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   return (
     <View>
         <Navbar/>
       <View style={styles.cardContainer}>
-        {/* <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('AddHome')}>
-          <Text style={styles.cardText}>Add Home</Text>
-        </TouchableOpacity> */}
-        <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('PreApproved')}>
-          <Text style={styles.cardText}>Pre-Approve Entry</Text>
-        </TouchableOpacity>
+        {userRole !== 'Guard' ? (
+          <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('PreApproved')}>
+            <Text style={styles.cardText}>Pre-Approve Entry</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('PermissionRequest')}>
+            <Text style={styles.cardText}>Request Permission</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   )
@@ -29,6 +48,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 20,
+    flexWrap: 'wrap',
   },
   card: {
     backgroundColor: '#f8f9fa',
@@ -45,3 +65,7 @@ const styles = StyleSheet.create({
 });
 
 export default HomePage
+
+
+
+

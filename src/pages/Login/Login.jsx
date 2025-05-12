@@ -7,7 +7,7 @@ import {
 } from 'react-native';
 import React, {useState} from 'react';
 import axios from 'axios';
-import {storeToken} from '../../utils/dbStore';
+import {storeToken, storeUserRole} from '../../utils/dbStore';
 import {API_URL} from '@env';
 import Toast from 'react-native-toast-message';
 import {sendFcmTokenToBackend} from '../../../firebaseConfig';
@@ -71,13 +71,25 @@ const Login = ({navigation}) => {
         });
 
         const token = response.data?.token;
-        console.log(token)
         const decodedToken = jwtDecode(token);
         const userId = decodedToken.userId;
-        console.log(userId)
 
         if (token && userId) {
           await storeToken(token);
+          
+          // Fetch user role
+          try {
+            const roleResponse = await axios.get(`${API_URL}/users/${userId}/role`);
+            const userRole = roleResponse.data?.roleName;
+            
+            // Store user role in AsyncStorage
+            if (userRole) {
+              await storeUserRole(userRole);
+            }
+          } catch (roleError) {
+            console.error('Error fetching user role:', roleError);
+          }
+          
           Toast.show({
             type: 'success',
             text1: 'Login Successful',

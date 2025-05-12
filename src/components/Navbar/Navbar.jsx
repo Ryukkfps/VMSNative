@@ -51,7 +51,7 @@ const Navbar = () => {
             }
           }
         } catch (homesError) {
-          console.error('Error fetching homes data:', homesError);
+          // console.error('Error fetching homes data:', homesError);
           setUserHomes([]);
         }
       } catch (error) {
