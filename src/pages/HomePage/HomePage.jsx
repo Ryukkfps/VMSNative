@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react'
 import Navbar from '../../components/Navbar/Navbar'
 import { getToken, getUserRole } from '../../utils/dbStore'
 import { useNavigation } from '@react-navigation/native'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 const HomePage = () => {
   const [token, setToken] = useState(null);
@@ -14,7 +15,8 @@ const HomePage = () => {
       try {
         const userToken = await getToken();
         const role = await getUserRole();
-        
+        const HomeId = await AsyncStorage.getItem('selectedHomeId');
+        console.log(HomeId)
         setToken(userToken);
         setUserRole(role);
       } catch (error) {

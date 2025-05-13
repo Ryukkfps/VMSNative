@@ -1,12 +1,24 @@
-import { StyleSheet, Text, View, TouchableOpacity, FlatList, Dimensions } from 'react-native';
-import React, { useState, useEffect } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faBuilding, faUserCircle, faBell, faCheck } from '@fortawesome/free-solid-svg-icons';
-import { getToken, removeToken } from '../../utils/dbStore';
-import { jwtDecode } from "jwt-decode";
+import {
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  FlatList,
+  Dimensions,
+} from 'react-native';
+import React, {useState, useEffect} from 'react';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import {
+  faBuilding,
+  faUserCircle,
+  faBell,
+  faCheck,
+} from '@fortawesome/free-solid-svg-icons';
+import {getToken, removeToken} from '../../utils/dbStore';
+import {jwtDecode} from 'jwt-decode';
 import axios from 'axios';
-import { API_URL } from '@env';
-import { useNavigation } from '@react-navigation/native';
+import {API_URL} from '@env';
+import {useNavigation} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Navbar = () => {
@@ -23,7 +35,7 @@ const Navbar = () => {
         const token = await getToken();
         const decodedToken = jwtDecode(token);
         const userId = decodedToken.userId;
-        
+
         // Get selected home from AsyncStorage
         const storedHomeId = await AsyncStorage.getItem('selectedHomeId');
         if (storedHomeId) {
@@ -37,15 +49,23 @@ const Navbar = () => {
         } catch (userError) {
           console.error('Error fetching user data:', userError);
         }
-        
+
         try {
-          const homesResponse = await axios.get(`${API_URL}/homes/user/${userId}`);
+          const homesResponse = await axios.get(
+            `${API_URL}/homes/user/${userId}`,
+          );
+          console.log(homesResponse.data);
           setUserHomes(homesResponse.data || []);
-          
+
           // If no home is selected yet but homes exist, select the first one
-          if (!storedHomeId && homesResponse.data && homesResponse.data.length > 0) {
+          if (
+            !storedHomeId &&
+            homesResponse.data &&
+            homesResponse.data.length > 0
+          ) {
             const firstHomeId = homesResponse.data[0]._id;
-            if (firstHomeId) { // Add check to ensure firstHomeId is not undefined
+            if (firstHomeId) {
+              // Add check to ensure firstHomeId is not undefined
               setSelectedHomeId(firstHomeId);
               await AsyncStorage.setItem('selectedHomeId', firstHomeId);
             }
@@ -62,8 +82,8 @@ const Navbar = () => {
     fetchData();
   }, []); // Only run on component mount
 
-  const handleHomeSelect = async (homeId) => {
-    if (homeId) { // Add check to ensure homeId is not undefined
+  const handleHomeSelect = async homeId => {
+    if (homeId) {
       setSelectedHomeId(homeId);
       await AsyncStorage.setItem('selectedHomeId', homeId);
       setBuildingDropdownVisible(false);
@@ -86,7 +106,7 @@ const Navbar = () => {
     }
   };
 
-  const handleDropdownToggle = (dropdownType) => {
+  const handleDropdownToggle = dropdownType => {
     if (dropdownType === 'building') {
       setBuildingDropdownVisible(!buildingDropdownVisible);
       setProfileDropdownVisible(false);
@@ -101,18 +121,20 @@ const Navbar = () => {
       await removeToken();
       navigation.reset({
         index: 0,
-        routes: [{ name: 'GetStarted' }],
+        routes: [{name: 'GetStarted'}],
       });
     } catch (error) {
       console.error('Error during logout:', error);
     }
   };
 
-  const renderHomeItem = ({ item }) => (
-    <TouchableOpacity 
-      style={[styles.homeItem, selectedHomeId === item._id && styles.selectedHomeItem]} 
-      onPress={() => handleHomeSelect(item._id)}
-    >
+  const renderHomeItem = ({item}) => (
+    <TouchableOpacity
+      style={[
+        styles.homeItem,
+        selectedHomeId === item._id && styles.selectedHomeItem,
+      ]}
+      onPress={() => handleHomeSelect(item.id)}>
       <View style={styles.homeItemContent}>
         <View>
           <Text style={styles.societyName}>{item.Society}</Text>
@@ -132,17 +154,16 @@ const Navbar = () => {
 
   return (
     <View style={styles.navbar}>
-      <TouchableOpacity 
-        onPress={() => handleDropdownToggle('building')} 
-        style={styles.iconContainer}
-      >
+      <TouchableOpacity
+        onPress={() => handleDropdownToggle('building')}
+        style={styles.iconContainer}>
         <FontAwesomeIcon icon={faBuilding} size={24} style={styles.icon} />
       </TouchableOpacity>
       {buildingDropdownVisible && (
         <>
-          <TouchableOpacity 
-            style={styles.overlay} 
-            onPress={() => setBuildingDropdownVisible(false)} 
+          <TouchableOpacity
+            style={styles.overlay}
+            onPress={() => setBuildingDropdownVisible(false)}
           />
           <View style={styles.dropdownMenu}>
             {userHomes.length > 0 ? (
@@ -156,21 +177,26 @@ const Navbar = () => {
               <Text style={styles.noHomesText}>No homes registered</Text>
             )}
             <View>
-              <TouchableOpacity 
-                style={[styles.addHomeButton, {
-                  padding: 15,
-                  borderTopWidth: 1,
-                  borderTopColor: '#eee',
-                  width: '100%',
-                  alignItems: 'center'
-                }]}
-                onPress={() => navigation.navigate('AddHome')}
-              >
-                <Text style={{
-                  fontSize: 14,
-                  color: '#007AFF',
-                  fontWeight: '500'
-                }}>+ Add a Flat or Apartment</Text>
+              <TouchableOpacity
+                style={[
+                  styles.addHomeButton,
+                  {
+                    padding: 15,
+                    borderTopWidth: 1,
+                    borderTopColor: '#eee',
+                    width: '100%',
+                    alignItems: 'center',
+                  },
+                ]}
+                onPress={() => navigation.navigate('AddHome')}>
+                <Text
+                  style={{
+                    fontSize: 14,
+                    color: '#007AFF',
+                    fontWeight: '500',
+                  }}>
+                  + Add a Flat or Apartment
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -179,42 +205,43 @@ const Navbar = () => {
 
       <View style={styles.spacer} />
 
-      <TouchableOpacity 
-        onPress={() => navigation.navigate('Notifications')} 
-        style={[styles.iconContainer, styles.notificationContainer]}
-      >
+      <TouchableOpacity
+        onPress={() => navigation.navigate('Notifications')}
+        style={[styles.iconContainer, styles.notificationContainer]}>
         <FontAwesomeIcon icon={faBell} size={24} style={styles.icon} />
         <View style={styles.notificationBadge}>
           <Text style={styles.notificationBadgeText}>3</Text>
         </View>
       </TouchableOpacity>
 
-      <TouchableOpacity 
-        onPress={() => handleDropdownToggle('profile')} 
-        style={styles.iconContainer}
-      >
+      <TouchableOpacity
+        onPress={() => handleDropdownToggle('profile')}
+        style={styles.iconContainer}>
         <FontAwesomeIcon icon={faUserCircle} size={24} style={styles.icon} />
       </TouchableOpacity>
       {profileDropdownVisible && (
         <>
-          <TouchableOpacity 
-            style={styles.overlay} 
-            onPress={() => setProfileDropdownVisible(false)} 
+          <TouchableOpacity
+            style={styles.overlay}
+            onPress={() => setProfileDropdownVisible(false)}
           />
           <View style={[styles.dropdownMenu, styles.rightAlignedMenu]}>
             <View style={styles.userInfoContainer}>
-              <Text style={styles.userName}>{userData?.Name || 'Loading...'}</Text>
+              <Text style={styles.userName}>
+                {userData?.Name || 'Loading...'}
+              </Text>
               <Text style={styles.userEmail}>{userData?.Email || ''}</Text>
             </View>
             <View style={styles.menuItemsContainer}>
               <TouchableOpacity style={styles.menuItem}>
                 <Text style={styles.menuItemText}>Profile Settings</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.menuItem, styles.logoutItem]} 
-                onPress={handleLogout}
-              >
-                <Text style={[styles.menuItemText, styles.logoutText]}>Logout</Text>
+              <TouchableOpacity
+                style={[styles.menuItem, styles.logoutItem]}
+                onPress={handleLogout}>
+                <Text style={[styles.menuItemText, styles.logoutText]}>
+                  Logout
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -260,7 +287,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     padding: 10,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.2,
     shadowRadius: 2,
     elevation: 2,
@@ -306,8 +333,7 @@ const styles = StyleSheet.create({
   spacer: {
     flex: 1,
   },
-  rightAlignedMenu: {
-  },
+  rightAlignedMenu: {},
   userInfoContainer: {
     padding: 15,
     borderBottomWidth: 1,
@@ -362,6 +388,3 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
-
-
-

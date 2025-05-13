@@ -133,6 +133,33 @@ const SelectSociety = () => {
     setOccupancyDropdownVisible(false);
   };
 
+  // Function to send notification to admin
+  const sendAdminNotification = async (userData, homeResponse) => {
+    try {
+      // Create notification data
+      const notificationData = {
+        title: 'New Home Addition Request',
+        body: `User ${userData.Name} has requested to add a home in ${selectedSociety.SocietyName}, ${selectedBuilding.BlockName}, Flat ${selectedFlat.FlatNumber}. Requires approval.`,
+        data: {
+          type: 'home_approval',
+          homeId: homeResponse.data._id,
+          userId: userData._id,
+          societyId: selectedSociety._id,
+          blockId: selectedBuilding._id,
+          unitId: selectedFlat._id
+        }
+      };
+
+      // Send notification to admin
+      await axios.post(`${API_URL}/notifications/admin`, notificationData);
+
+      console.log('Admin notification sent successfully');
+    } catch (error) {
+      console.error('Error sending admin notification:', error);
+      // Don't show error to user as the home was already added successfully
+    }
+  };
+
   const handleAddHome = async () => {
     if (!selectedSociety || !selectedBuilding || !selectedFlat || !selectedOwnershipType || !selectedOccupancyStatus) {
       Toast.show({
@@ -156,12 +183,19 @@ const SelectSociety = () => {
         OccupancyStatus: selectedOccupancyStatus._id,
       };
 
+      // Get user data for notification
+      const userResponse = await axios.get(`${API_URL}/users/${userId}`);
+      const userData = userResponse.data;
+
       axios.post(`${API_URL}/homes`, homeData)
-        .then(response => {
+        .then(async (response) => {
+          // Send notification to admin
+          await sendAdminNotification(userData, response);
+
           Toast.show({
             type: 'success',
             text1: 'Home Added',
-            text2: 'Your home has been added successfully.',
+            text2: 'Your home has been added successfully and sent for admin approval.',
           });
           navigation.navigate('Home');
         })
@@ -173,10 +207,11 @@ const SelectSociety = () => {
           });
         });
     } catch (error) {
+      console.error('Error in handleAddHome:', error);
       Toast.show({
         type: 'error',
         text1: 'Error',
-        text2: 'Error decoding token or fetching user ID.',
+        text2: 'Error processing your request. Please try again.',
       });
     }
   };
