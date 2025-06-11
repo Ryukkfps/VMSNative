@@ -9,6 +9,7 @@ import SelectSociety from '../pages/AddHome/SelectSociety';
 import Notifications from '../pages/Notifications/Notifications'
 import PreApproved from '../pages/Entry/PreApproved';
 import PermissionRequest from '../pages/GatePermission/PermissionRequest';
+import CreatePost from '../pages/BlogPosting/CreatePost';
 
 const Stack = createNativeStackNavigator();
 
@@ -32,6 +33,7 @@ const AppNavigator = () => {
         <Stack.Screen name="Notifications" component={Notifications} />
         <Stack.Screen name="PreApproved" component={PreApproved} />
         <Stack.Screen name="PermissionRequest" component={PermissionRequest} />
+        <Stack.Screen name="CreatePost" component={CreatePost} />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -20,6 +20,7 @@ import axios from 'axios';
 import {API_URL} from '@env';
 import {useNavigation} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { CommonActions } from '@react-navigation/native';
 
 const Navbar = () => {
   const navigation = useNavigation();
@@ -86,7 +87,22 @@ const Navbar = () => {
     if (homeId) {
       setSelectedHomeId(homeId);
       await AsyncStorage.setItem('selectedHomeId', homeId);
+
+      // Find the selected home object by _id
+      const selectedHome = userHomes.find(home => home._id === homeId);
+      if (selectedHome) {
+        await AsyncStorage.setItem('selectedHomeObject', JSON.stringify(selectedHome));
+      } else {
+        console.warn('Selected home object not found for homeId:', homeId);
+      }
+
       setBuildingDropdownVisible(false);
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{ name: 'Home' }], // replace 'Home' with your main entry route
+        })
+      );
     } else {
       console.warn('Attempted to select undefined homeId');
     }
@@ -134,15 +150,15 @@ const Navbar = () => {
         styles.homeItem,
         selectedHomeId === item._id && styles.selectedHomeItem,
       ]}
-      onPress={() => handleHomeSelect(item.id)}>
+      onPress={() => handleHomeSelect(item._id)}>
       <View style={styles.homeItemContent}>
         <View>
-          <Text style={styles.societyName}>{item.Society}</Text>
+          <Text style={styles.societyName}>{item.SId?.SocietyName || 'N/A'}</Text>
           <Text style={styles.homeDetails}>
-            {item.Block} - {item.Unit}
+            {item.BId?.BlockName || 'N/A'} - {item.UId?.FlatNumber || 'N/A'}
           </Text>
           <Text style={styles.homeType}>
-            {item.OwnershipType} • {item.OccupancyStatus}
+            {item.OwnershipType?.TypeName || 'N/A'} • {item.OccupancyStatus?.OSName || 'N/A'}
           </Text>
         </View>
         {selectedHomeId === item._id && (

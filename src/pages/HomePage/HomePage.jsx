@@ -4,6 +4,7 @@ import Navbar from '../../components/Navbar/Navbar'
 import { getToken, getUserRole } from '../../utils/dbStore'
 import { useNavigation } from '@react-navigation/native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import UserFeed from '../BlogPosting/UserFeed'
 
 const HomePage = () => {
   const [token, setToken] = useState(null);
@@ -32,9 +33,7 @@ const HomePage = () => {
         <Navbar/>
       <View style={styles.cardContainer}>
         {userRole !== 'Guard' ? (
-          <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('PreApproved')}>
-            <Text style={styles.cardText}>Pre-Approve Entry</Text>
-          </TouchableOpacity>
+          <UserFeed />
         ) : (
           <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('PermissionRequest')}>
             <Text style={styles.cardText}>Request Permission</Text>
