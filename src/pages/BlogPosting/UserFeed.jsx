@@ -13,6 +13,7 @@ import axios from 'axios';
 import {API_URL} from '@env';
 import {SERVER_URL} from '@env';
 import {useNavigation} from '@react-navigation/native';
+import FloatingPlusButton from '../../components/FloatingPlusButton/FloatingPlusButton';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const UserFeed = () => {
@@ -22,9 +23,7 @@ const UserFeed = () => {
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  const [menuVisible, setMenuVisible] = useState(false);
   const POSTS_PER_PAGE = 10;
-  const [SId, setSId] = useState('');
   const navigation = useNavigation();
 
   useEffect(() => {
@@ -51,8 +50,6 @@ const UserFeed = () => {
         console.log('Parsed Home:', parsedHome);
 
         if (parsedHome.SId && parsedHome.SId._id) {
-          setSId(parsedHome.SId._id); // This SId state might be used elsewhere or for clarity
-
           const currentPage = refresh ? 1 : page;
           const response = await axios.get(
             `${API_URL}/blog-posts/society/${parsedHome.SId._id}`,
@@ -88,7 +85,7 @@ const UserFeed = () => {
         setHasMore(false);
       }
     } catch (error) {
-      console.error('Error fetching blog posts:', error);
+      //  
       // Check if the error is from axios or other parts
       if (axios.isAxiosError(error)) {
         setError(`Failed to load blog posts: ${error.message}`);
@@ -134,11 +131,14 @@ const UserFeed = () => {
 
   if (error) {
     return (
-      <View style={styles.centered}>
-        <Text style={styles.postContent}>No Posts Available</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={handleRefresh}>
-          <Text style={styles.retryText}>Retry</Text>
-        </TouchableOpacity>
+      <View style={styles.container}>
+        <View style={styles.centered}>
+          <Text style={styles.postContent}>No Posts Available</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={handleRefresh}>
+            <Text style={styles.retryText}>Retry</Text>
+          </TouchableOpacity>
+          <FloatingPlusButton navigation={navigation} />
+        </View>
       </View>
     );
   }
@@ -180,39 +180,11 @@ const UserFeed = () => {
         onEndReachedThreshold={0.3}
         refreshing={loading}
         onRefresh={handleRefresh}
+        contentContainerStyle={styles.flatListContent}
       />
 
-      {/* Floating + Button */}
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => setMenuVisible(true)}
-        activeOpacity={0.7}>
-        <Text style={styles.fabIcon}>+</Text>
-      </TouchableOpacity>
-
-      {/* Options Menu Modal */}
-      <Modal
-        visible={menuVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setMenuVisible(false)}>
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPressOut={() => setMenuVisible(false)}>
-          <View style={styles.menuContainer}>
-            <TouchableOpacity
-              style={styles.menuItem}
-              onPress={() => {
-                setMenuVisible(false);
-                navigation.navigate('CreatePost');
-              }}>
-              <Text style={styles.menuText}>Create New Post</Text>
-            </TouchableOpacity>
-            {/* Add more menu items here if needed */}
-          </View>
-        </TouchableOpacity>
-      </Modal>
+      {/* FloatingPlusButton moved outside the FlatList context */}
+      <FloatingPlusButton navigation={navigation} />
     </View>
   );
 };
@@ -223,11 +195,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 10,
+    position: 'relative', // Add this to establish positioning context
   },
   centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingBottom: 100, // Add space for floating button
+  },
+  flatListContent: {
+    paddingBottom: 100, // Add space for floating button
   },
   header: {
     fontSize: 24,
@@ -291,47 +268,6 @@ const styles = StyleSheet.create({
   retryText: {
     color: 'white',
     fontSize: 16,
-  },
-  fab: {
-    position: 'absolute',
-    right: 20,
-    bottom: 30,
-    backgroundColor: '#007bff',
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOpacity: 0.3,
-    shadowOffset: {width: 0, height: 2},
-    shadowRadius: 4,
-    zIndex: 100,
-  },
-  fabIcon: {
-    color: 'white',
-    fontSize: 32,
-    fontWeight: 'bold',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.2)',
-    justifyContent: 'flex-end',
-  },
-  menuContainer: {
-    backgroundColor: 'white',
-    padding: 20,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    elevation: 10,
-  },
-  menuItem: {
-    paddingVertical: 15,
-  },
-  menuText: {
-    fontSize: 18,
-    color: '#007bff',
   },
   postImage: {
     width: '100%',

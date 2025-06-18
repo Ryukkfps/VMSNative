@@ -4,8 +4,10 @@ import { launchImageLibrary } from 'react-native-image-picker'
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {API_URL} from '@env';
 import axios from 'axios';
+import { useNavigation } from '@react-navigation/native';
 
 const CreatePost = () => {
+  const navigation = useNavigation();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [author, setAuthor] = useState('');
@@ -77,6 +79,9 @@ const CreatePost = () => {
         }
       );
       const result = response.data;
+      if (result) {
+        navigation.navigate('Home');
+      }
       console.log('Submitted:', result);
       // Reset form or navigate after submit
     } catch (error) {

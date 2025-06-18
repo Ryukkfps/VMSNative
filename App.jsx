@@ -5,6 +5,7 @@ import Toast from 'react-native-toast-message';
 import messaging from '@react-native-firebase/messaging';
 import {requestUserPermission, configureNotifications} from './firebaseConfig';
 import {check, request, PERMISSIONS, RESULTS} from 'react-native-permissions';
+import {SafeAreaProvider} from 'react-native-safe-area-context';
 
 const requestGalleryPermission = async () => {
   if (Platform.OS === 'android') {
@@ -47,10 +48,10 @@ const App = () => {
   }, []);
 
   return (
-    <>
+    <SafeAreaProvider>
       <AppNavigator />
       <Toast />
-    </>
+    </SafeAreaProvider>
   );
 };
 

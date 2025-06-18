@@ -14,6 +14,7 @@ import Toast from 'react-native-toast-message';
 import {getToken} from '../../utils/dbStore';
 import {jwtDecode} from 'jwt-decode';
 import DatePicker from 'react-native-date-picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const PreApproved = () => {
   const [formData, setFormData] = useState({
@@ -34,14 +35,48 @@ const PreApproved = () => {
 
   const [passcodeRec, setPasscodeRec] = useState(false);
   const [passcode, setPasscode] = useState('');
+  const [selectedHome, setSelectedHome] = useState(null);
 
   useEffect(() => {
     console.log('TimeSpanUnit:', formData.TimeSpanUnit);
   }, [formData.TimeSpanUnit]);
 
+  useEffect(() => {
+    const fetchSelectedHome = async () => {
+      try {
+        const homeObject = await AsyncStorage.getItem('selectedHomeObject');
+        if (homeObject) {
+          const parsedHome = JSON.parse(homeObject);
+          setSelectedHome(parsedHome);
+          console.log('Selected Home:', parsedHome);
+        } else {
+          console.warn('No selected home found in AsyncStorage');
+        }
+      } catch (error) {
+        console.error('Error fetching selected home:', error);
+      }
+    };
+
+    fetchSelectedHome();
+  }, []);
+
+
+
 
   const handleSubmit = async () => {
     try {
+      // Check if a home is selected
+      if (!selectedHome) {
+        Toast.show({
+          type: 'error',
+          text1: 'No Home Selected',
+          text2: 'Please select a home first to create an entry permit.',
+          position: 'bottom',
+          visibilityTime: 3000,
+        });
+        return;
+      }
+
       const token = await getToken();
       const decodedToken = jwtDecode(token);
       const userId = decodedToken.userId;
@@ -65,6 +100,7 @@ const PreApproved = () => {
         Name: formData.Name,
         TimeSpan: timeSpan,
         UserId: userId,
+        UId: selectedHome.UId?._id || selectedHome.UId, // Include UId from selected home
         DateTime : date,
       };
       console.log(date.getDate)
@@ -121,6 +157,18 @@ Please Share it at the gate with the guard`,
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Create Entry Permit</Text>
+
+      {selectedHome && (
+        <View style={styles.selectedHomeContainer}>
+          <Text style={styles.selectedHomeTitle}>Selected Home:</Text>
+          <Text style={styles.selectedHomeText}>
+            {selectedHome.SId?.SocietyName || 'N/A'} - {selectedHome.BId?.BlockName || 'N/A'} - {selectedHome.UId?.FlatNumber || 'N/A'}
+          </Text>
+          <Text style={styles.changeHomeText}>
+            To change home, please go to the home selection menu
+          </Text>
+        </View>
+      )}
 
       <TextInput
         style={styles.input}
@@ -269,6 +317,30 @@ const styles = StyleSheet.create({
   shareButtonText: {
     color: '#fff',
     fontSize: 16,
+  },
+  selectedHomeContainer: {
+    backgroundColor: '#f0f8ff',
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  selectedHomeTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 5,
+  },
+  selectedHomeText: {
+    fontSize: 14,
+    color: '#555',
+    marginBottom: 8,
+  },
+  changeHomeText: {
+    fontSize: 12,
+    color: '#888',
+    fontStyle: 'italic',
   },
 });
 

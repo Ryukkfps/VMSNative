@@ -1,10 +1,16 @@
-import { StyleSheet, Text, View, TouchableOpacity } from 'react-native'
-import React, { useState, useEffect } from 'react'
-import Navbar from '../../components/Navbar/Navbar'
-import { getToken, getUserRole } from '../../utils/dbStore'
-import { useNavigation } from '@react-navigation/native'
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import UserFeed from '../BlogPosting/UserFeed'
+import {
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  SafeAreaView,
+} from 'react-native';
+import React, {useState, useEffect} from 'react';
+import Navbar from '../../components/Navbar/Navbar';
+import {getToken, getUserRole} from '../../utils/dbStore';
+import {useNavigation} from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import UserFeed from '../BlogPosting/UserFeed';
 
 const HomePage = () => {
   const [token, setToken] = useState(null);
@@ -17,7 +23,7 @@ const HomePage = () => {
         const userToken = await getToken();
         const role = await getUserRole();
         const HomeId = await AsyncStorage.getItem('selectedHomeId');
-        console.log(HomeId)
+        console.log(HomeId);
         setToken(userToken);
         setUserRole(role);
       } catch (error) {
@@ -29,21 +35,36 @@ const HomePage = () => {
   }, []);
 
   return (
-    <View>
-        <Navbar/>
-      <View style={styles.cardContainer}>
-        {userRole !== 'Guard' ? (
-          <UserFeed />
-        ) : (
-          <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('PermissionRequest')}>
-            <Text style={styles.cardText}>Request Permission</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-    </View>
-  )
-}
+    <SafeAreaView style={styles.safeContainer}>
+      <Navbar />
+      {userRole !== 'Guard' ? (
+        <UserFeed />
+      ) : (
+        <View>
+          <View style={styles.cardContainer}>
+            <TouchableOpacity
+              style={styles.card}
+              onPress={() => navigation.navigate('PermissionRequest')}>
+              <Text style={styles.cardText}>Request Permission</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.cardContainer}>
+            <TouchableOpacity
+              style={styles.card}
+              onPress={() => navigation.navigate('GatePassVerification')}>
+              <Text style={styles.cardText}>GatePass Verification</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+    </SafeAreaView>
+  );
+};
 const styles = StyleSheet.create({
+  safeContainer: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+  },
   cardContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -62,11 +83,7 @@ const styles = StyleSheet.create({
   cardText: {
     fontSize: 16,
     color: '#333',
-  }
+  },
 });
 
-export default HomePage
-
-
-
-
+export default HomePage;
