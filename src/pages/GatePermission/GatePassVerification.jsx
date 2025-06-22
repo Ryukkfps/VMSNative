@@ -192,11 +192,12 @@ const GatePassVerification = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.navBar}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <FontAwesomeIcon icon={faArrowLeft} size={20} color="#000" />
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <FontAwesomeIcon icon={faArrowLeft} size={20} color="#007AFF" />
         </TouchableOpacity>
-        <Text style={styles.title}>Gate Pass Verification</Text>
+        <Text style={styles.headerTitle}>Gate Pass Verification</Text>
+        <View style={styles.placeholder} />
       </View>
 
       <ScrollView contentContainerStyle={styles.contentContainer}>
@@ -240,26 +241,35 @@ export default GatePassVerification;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#f8f9fa',
   },
-  navBar: {
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
     backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e9ecef',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
   backButton: {
     padding: 8,
-    marginRight: 12,
+    borderRadius: 20,
+    backgroundColor: '#f8f9fa',
   },
-  title: {
+  headerTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: '#333',
-    flex: 1,
+  },
+  placeholder: {
+    width: 36,
   },
   contentContainer: {
     flexGrow: 1,

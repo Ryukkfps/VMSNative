@@ -5,6 +5,8 @@ import {
   TextInput,
   TouchableOpacity,
   Share,
+  SafeAreaView,
+  ScrollView,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import DropDownPicker from 'react-native-dropdown-picker';
@@ -15,8 +17,12 @@ import {getToken} from '../../utils/dbStore';
 import {jwtDecode} from 'jwt-decode';
 import DatePicker from 'react-native-date-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useNavigation} from '@react-navigation/native';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import {faArrowLeft} from '@fortawesome/free-solid-svg-icons';
 
 const PreApproved = () => {
+  const navigation = useNavigation();
   const [formData, setFormData] = useState({
     Name: '',
     TimeSpanValue: '',
@@ -36,6 +42,10 @@ const PreApproved = () => {
   const [passcodeRec, setPasscodeRec] = useState(false);
   const [passcode, setPasscode] = useState('');
   const [selectedHome, setSelectedHome] = useState(null);
+
+  const handleGoBack = () => {
+    navigation.goBack();
+  };
 
   useEffect(() => {
     console.log('TimeSpanUnit:', formData.TimeSpanUnit);
@@ -155,8 +165,17 @@ Please Share it at the gate with the guard`,
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Create Entry Permit</Text>
+    <SafeAreaView style={styles.safeContainer}>
+      {/* Header with back button */}
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={handleGoBack}>
+          <FontAwesomeIcon icon={faArrowLeft} size={20} color="#007AFF" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Create Entry Permit</Text>
+        <View style={styles.placeholder} />
+      </View>
+
+      <ScrollView contentContainerStyle={styles.container}>
 
       {selectedHome && (
         <View style={styles.selectedHomeContainer}>
@@ -218,11 +237,44 @@ Please Share it at the gate with the guard`,
           </TouchableOpacity>
         </View>
       ) : null}
-    </View>
+    </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeContainer: {
+    flex: 1,
+    backgroundColor: '#f8f9fa',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e9ecef',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  backButton: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: '#f8f9fa',
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+  },
+  placeholder: {
+    width: 36,
+  },
   container: {
     flex: 1,
     padding: 20,

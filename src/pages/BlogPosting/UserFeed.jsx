@@ -5,7 +5,6 @@ import {
   FlatList,
   ActivityIndicator,
   TouchableOpacity,
-  Modal,
   Image,
 } from 'react-native';
 import React, {useState, useEffect} from 'react';
@@ -28,7 +27,7 @@ const UserFeed = () => {
 
   useEffect(() => {
     fetchPosts();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchPosts = async (refresh = false) => {
     try {
@@ -110,6 +109,10 @@ const UserFeed = () => {
     }
   };
 
+  const handlePostPress = (post) => {
+    navigation.navigate('PostDetail', { post });
+  };
+
   const renderFooter = () => {
     if (!loadingMore) return null;
 
@@ -150,7 +153,11 @@ const UserFeed = () => {
         data={posts}
         keyExtractor={(item, index) => item._id || index.toString()}
         renderItem={({item}) => (
-          <View style={styles.postCard}>
+          <TouchableOpacity
+            style={styles.postCard}
+            onPress={() => handlePostPress(item)}
+            activeOpacity={0.7}
+          >
             {item.image ? (
               <Image
                 source={{
@@ -170,7 +177,7 @@ const UserFeed = () => {
             <Text style={styles.postDate}>
               {new Date(item.createdAt).toLocaleDateString()}
             </Text>
-          </View>
+          </TouchableOpacity>
         )}
         ListEmptyComponent={
           <Text style={styles.emptyText}>No blog posts available</Text>

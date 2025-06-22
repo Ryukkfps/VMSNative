@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   FlatList,
   ScrollView,
+  SafeAreaView,
 } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import { API_URL } from '@env';
@@ -164,12 +165,13 @@ const PermissionRequest = () => {
   );
 
   return (
-    <View style={styles.container}>
-      <View style={styles.navBar}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <FontAwesomeIcon icon={faArrowLeft} size={20} color="#000" />
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <FontAwesomeIcon icon={faArrowLeft} size={20} color="#007AFF" />
         </TouchableOpacity>
-        <Text style={styles.title}>Permission Request</Text>
+        <Text style={styles.headerTitle}>Permission Request</Text>
+        <View style={styles.placeholder} />
       </View>
 
       <ScrollView contentContainerStyle={styles.contentContainer}>
@@ -238,7 +240,7 @@ const PermissionRequest = () => {
           <Text style={styles.submitButtonText}>Submit Request</Text>
         </TouchableOpacity>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -247,21 +249,35 @@ export default PermissionRequest;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#f8f9fa',
   },
-  navBar: {
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#ffffff',
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: '#e9ecef',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
   backButton: {
-    marginRight: 16,
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: '#f8f9fa',
   },
-  title: {
+  headerTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '600',
+    color: '#333',
+  },
+  placeholder: {
+    width: 36,
   },
   contentContainer: {
     padding: 16,
