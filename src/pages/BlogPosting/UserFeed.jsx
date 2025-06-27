@@ -48,7 +48,7 @@ const UserFeed = () => {
         console.log('Retrieved Home from AsyncStorage:', Home);
         const parsedHome = JSON.parse(Home);
         console.log('Parsed Home:', parsedHome);
-
+        console.log(parsedHome.SId , parsedHome.SId._id)
         if (parsedHome.SId && parsedHome.SId._id) {
           const currentPage = refresh ? 1 : page;
           const response = await axios.get(

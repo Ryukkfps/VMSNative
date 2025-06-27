@@ -2,6 +2,8 @@ import { StyleSheet, Text, View, TextInput, Button } from 'react-native'
 import React, { useState } from 'react'
 import axios from 'axios'
 import {API_URL} from '@env'
+import { storeToken } from '../../utils/dbStore';
+import {jwtDecode} from 'jwt-decode';
 const Register = ({navigation}) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -22,7 +24,16 @@ const Register = ({navigation}) => {
         Email: email,
         Phone: phone
       });
+      console.log(response.data)
+      const token = response.data?.token;
+      const decodedToken = jwtDecode(token);
+      const userId = decodedToken.userId;
+      
+      if (token && userId) {
+        await storeToken(token);
+      }
       alert('User registered successfully');
+      await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second delay
       navigation.navigate('Home')
     } catch (error) {
       console.error('There was a problem with the registration:', error);

@@ -36,12 +36,10 @@ const Navbar = () => {
         const token = await getToken();
         const decodedToken = jwtDecode(token);
         const userId = decodedToken.userId;
+        console.log(userId);
 
         // Get selected home from AsyncStorage
-        const storedHomeId = await AsyncStorage.getItem('selectedHomeId');
-        if (storedHomeId) {
-          setSelectedHomeId(storedHomeId);
-        }
+
 
         // Fetch user data and homes data separately to handle errors independently
         try {
@@ -49,6 +47,11 @@ const Navbar = () => {
           setUserData(userResponse.data);
         } catch (userError) {
           console.error('Error fetching user data:', userError);
+        }
+
+        const storedHomeId = await AsyncStorage.getItem('selectedHomeId');
+        if (storedHomeId) {
+          setSelectedHomeId(storedHomeId);
         }
 
         try {
@@ -135,6 +138,8 @@ const Navbar = () => {
   const handleLogout = async () => {
     try {
       await removeToken();
+      await AsyncStorage.removeItem('selectedHomeId');
+      await AsyncStorage.removeItem('selectedHomeObject');
       navigation.reset({
         index: 0,
         routes: [{name: 'GetStarted'}],
@@ -144,35 +149,48 @@ const Navbar = () => {
     }
   };
 
-  const renderHomeItem = ({item}) => (
-    <TouchableOpacity
-      style={[
-        styles.homeItem,
-        selectedHomeId === item._id && styles.selectedHomeItem,
-      ]}
-      onPress={() => handleHomeSelect(item._id)}>
-      <View style={styles.homeItemContent}>
-        <View>
-          <Text style={styles.societyName}>{item.SId?.SocietyName || 'N/A'}</Text>
-          <Text style={styles.homeDetails}>
-            {item.BId?.BlockName || 'N/A'} - {item.UId?.FlatNumber || 'N/A'}
-          </Text>
-          <Text style={styles.homeType}>
-            {item.OwnershipType?.TypeName || 'N/A'} • {item.OccupancyStatus?.OSName || 'N/A'}
-          </Text>
+  const renderHomeItem = ({ item }) => {
+    const isPending = item.status === false;
+    return (
+      <TouchableOpacity
+        style={[
+          styles.homeItem,
+          selectedHomeId === item._id && styles.selectedHomeItem,
+          isPending && styles.disabledHomeItem,
+        ]}
+        onPress={() => !isPending && handleHomeSelect(item._id)}
+        activeOpacity={isPending ? 1 : 0.2}
+        disabled={isPending}
+      >
+        <View style={styles.homeItemContent}>
+          <View>
+            <Text style={[styles.societyName, isPending && styles.disabledText]}>
+              {item.SId?.SocietyName || 'N/A'}
+            </Text>
+            <Text style={[styles.homeDetails, isPending && styles.disabledText]}>
+              {item.BId?.BlockName || 'N/A'} - {item.UId?.FlatNumber || 'N/A'}
+            </Text>
+            <Text style={[styles.homeType, isPending && styles.disabledText]}>
+              {item.OwnershipType?.TypeName || 'N/A'} • {item.OccupancyStatus?.OSName || 'N/A'}
+            </Text>
+            {isPending && (
+              <Text style={styles.pendingApprovalLabel}>Pending Approval</Text>
+            )}
+          </View>
+          {selectedHomeId === item._id && !isPending && (
+            <FontAwesomeIcon icon={faCheck} size={16} color="#007AFF" />
+          )}
         </View>
-        {selectedHomeId === item._id && (
-          <FontAwesomeIcon icon={faCheck} size={16} color="#007AFF" />
-        )}
-      </View>
-    </TouchableOpacity>
-  );
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={styles.navbar}>
       <TouchableOpacity
         onPress={() => handleDropdownToggle('building')}
-        style={styles.iconContainer}>
+        style={styles.iconContainer}
+      >
         <FontAwesomeIcon icon={faBuilding} size={24} style={styles.icon} />
       </TouchableOpacity>
       {buildingDropdownVisible && (
@@ -270,6 +288,19 @@ const Navbar = () => {
 export default Navbar;
 
 const styles = StyleSheet.create({
+  disabledHomeItem: {
+    backgroundColor: '#f8d7da',
+    opacity: 0.7,
+  },
+  disabledText: {
+    color: '#aaa',
+  },
+  pendingApprovalLabel: {
+    marginTop: 4,
+    fontSize: 12,
+    color: '#d9534f',
+    fontWeight: 'bold',
+  },
   navbar: {
     flexDirection: 'row',
     alignItems: 'center',
