@@ -297,7 +297,7 @@ const styles = StyleSheet.create({
   },
   dropdownMenu: {
     position: 'absolute',
-    top: 40,
+    top: 55,
     left: 0,
     right: 0,
     backgroundColor: '#fff',

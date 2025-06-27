@@ -1,19 +1,27 @@
 import React, {useEffect, useState} from 'react';
-import {StyleSheet, Text, View, FlatList, TouchableOpacity} from 'react-native';
+import {StyleSheet, Text, View, FlatList, TouchableOpacity, SafeAreaView, ActivityIndicator} from 'react-native';
 import axios from 'axios';
 import {API_URL} from '@env';
 import {jwtDecode} from 'jwt-decode';
 import {getToken, getUserRole} from '../../utils/dbStore';
-// Optionally import a date formatting library
-// import { format } from 'date-fns';
+import {useNavigation} from '@react-navigation/native';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import {faArrowLeft, faCheckCircle, faTimesCircle, faClock, faBell} from '@fortawesome/free-solid-svg-icons';
 
 const Notifications = () => {
+  const navigation = useNavigation();
   const [notifications, setNotifications] = useState([]);
   const [userRole, setUserRole] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const handleGoBack = () => {
+    navigation.goBack();
+  };
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setLoading(true);
         const token = await getToken();
         const decodedToken = jwtDecode(token);
         const user = decodedToken.userId;
@@ -24,12 +32,14 @@ const Notifications = () => {
           `${API_URL}/notifications/user/${user}`,
         );
         // Sort notifications by creation time, newest first
-        const sortedNotifications = response.data.sort((a, b) => 
+        const sortedNotifications = response.data.sort((a, b) =>
           new Date(b.createdAt) - new Date(a.createdAt)
         );
         setNotifications(sortedNotifications);
       } catch (error) {
         console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -109,109 +119,305 @@ const Notifications = () => {
     }
   };
 
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'approved':
+        return <FontAwesomeIcon icon={faCheckCircle} size={20} color="#28a745" />;
+      case 'denied':
+        return <FontAwesomeIcon icon={faTimesCircle} size={20} color="#dc3545" />;
+      case 'pending':
+        return <FontAwesomeIcon icon={faClock} size={20} color="#ffc107" />;
+      default:
+        return <FontAwesomeIcon icon={faBell} size={20} color="#6c757d" />;
+    }
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = Math.floor((now - date) / (1000 * 60 * 60));
+
+    if (diffInHours < 1) {
+      return 'Just now';
+    } else if (diffInHours < 24) {
+      return `${diffInHours}h ago`;
+    } else {
+      const diffInDays = Math.floor(diffInHours / 24);
+      return `${diffInDays}d ago`;
+    }
+  };
+
   const renderNotification = ({item}) => {
     return (
       <View style={[
-        styles.notification, 
+        styles.notificationCard,
         !item.isViewed && styles.unviewedNotification
       ]}>
-        <Text style={styles.title}>{item.NotificationTitle}</Text>
-        <Text>{item.NotificationBody}</Text>
-        {/* Optionally format the date */}
-        {/* <Text>{format(new Date(item.createdAt), 'PPpp')}</Text> */}
-        
+        <View style={styles.notificationHeader}>
+          <View style={styles.statusIconContainer}>
+            {getStatusIcon(item.status)}
+          </View>
+          <View style={styles.headerContent}>
+            <Text style={styles.notificationTitle}>{item.NotificationTitle}</Text>
+            <Text style={styles.timeStamp}>{formatDate(item.createdAt)}</Text>
+          </View>
+        </View>
+
+        <Text style={styles.notificationBody}>{item.NotificationBody}</Text>
+
         {item.requestType === 'permitRequest' && item.status === 'pending' && userRole !== 'Guard' && (
           <View style={styles.actionButtons}>
             <TouchableOpacity
               style={[styles.actionButton, styles.approveButton]}
-              onPress={() => handleApprove(item._id, item.requestId)}>
+              onPress={() => handleApprove(item._id, item.requestId)}
+              activeOpacity={0.8}>
+              <FontAwesomeIcon icon={faCheckCircle} size={16} color="#ffffff" />
               <Text style={styles.buttonText}>Approve</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.actionButton, styles.denyButton]}
-              onPress={() => handleDeny(item._id, item.requestId)}>
+              onPress={() => handleDeny(item._id, item.requestId)}
+              activeOpacity={0.8}>
+              <FontAwesomeIcon icon={faTimesCircle} size={16} color="#ffffff" />
               <Text style={styles.buttonText}>Deny</Text>
             </TouchableOpacity>
           </View>
         )}
-        
+
         {(item.status === 'approved' || item.status === 'denied') && (
-          <Text style={[
-            styles.statusText,
-            item.status === 'approved' ? styles.approvedText : styles.deniedText
-          ]}>
-            {item.status === 'approved' ? 'Approved' : 'Denied'}
-          </Text>
+          <View style={styles.statusContainer}>
+            <View style={[
+              styles.statusBadge,
+              item.status === 'approved' ? styles.approvedBadge : styles.deniedBadge
+            ]}>
+              {getStatusIcon(item.status)}
+              <Text style={[
+                styles.statusText,
+                item.status === 'approved' ? styles.approvedText : styles.deniedText
+              ]}>
+                {item.status === 'approved' ? 'Approved' : 'Denied'}
+              </Text>
+            </View>
+          </View>
         )}
       </View>
     );
   };
 
+  const renderEmptyState = () => (
+    <View style={styles.emptyState}>
+      <FontAwesomeIcon icon={faBell} size={64} color="#e9ecef" />
+      <Text style={styles.emptyStateTitle}>No Notifications</Text>
+      <Text style={styles.emptyStateText}>You're all caught up! No new notifications at this time.</Text>
+    </View>
+  );
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={handleGoBack}>
+            <FontAwesomeIcon icon={faArrowLeft} size={20} color="#007AFF" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Notifications</Text>
+          <View style={styles.placeholder} />
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#007AFF" />
+          <Text style={styles.loadingText}>Loading notifications...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.header}>Notifications</Text>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={handleGoBack}>
+          <FontAwesomeIcon icon={faArrowLeft} size={20} color="#007AFF" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Notifications</Text>
+        <View style={styles.placeholder} />
+      </View>
+
       <FlatList
         data={notifications}
         renderItem={renderNotification}
         keyExtractor={(item) => item._id}
+        contentContainerStyle={styles.listContainer}
+        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={renderEmptyState}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+    backgroundColor: '#f8f9fa',
   },
   header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 16,
-  },
-  notification: {
-    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#ffffff',
     borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
+    borderBottomColor: '#e9ecef',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  backButton: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: '#f8f9fa',
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+  },
+  placeholder: {
+    width: 36,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#666',
+  },
+  listContainer: {
+    padding: 16,
+  },
+  notificationCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    borderLeftWidth: 4,
+    borderLeftColor: '#e9ecef',
   },
   unviewedNotification: {
-    backgroundColor: '#e6f7ff',
+    borderLeftColor: '#007AFF',
+    backgroundColor: '#f8f9ff',
   },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
+  notificationHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  statusIconContainer: {
+    marginRight: 12,
+    marginTop: 2,
+  },
+  headerContent: {
+    flex: 1,
+  },
+  notificationTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 4,
+  },
+  timeStamp: {
+    fontSize: 12,
+    color: '#6c757d',
+  },
+  notificationBody: {
+    fontSize: 14,
+    color: '#495057',
+    lineHeight: 20,
+    marginBottom: 16,
   },
   actionButtons: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    marginTop: 10,
+    gap: 12,
   },
   actionButton: {
-    paddingVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
     paddingHorizontal: 16,
-    borderRadius: 4,
-    marginLeft: 8,
+    borderRadius: 8,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    gap: 6,
   },
   approveButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#28a745',
   },
   denyButton: {
-    backgroundColor: '#F44336',
+    backgroundColor: '#dc3545',
   },
   buttonText: {
-    color: 'white',
-    fontWeight: 'bold',
+    color: '#ffffff',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  statusContainer: {
+    alignItems: 'flex-end',
+    marginTop: 8,
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    gap: 6,
+  },
+  approvedBadge: {
+    backgroundColor: '#d4edda',
+  },
+  deniedBadge: {
+    backgroundColor: '#f8d7da',
   },
   statusText: {
-    marginTop: 8,
-    fontWeight: 'bold',
-    textAlign: 'right',
+    fontWeight: '600',
+    fontSize: 12,
   },
   approvedText: {
-    color: '#4CAF50',
+    color: '#28a745',
   },
   deniedText: {
-    color: '#F44336',
+    color: '#dc3545',
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  emptyStateTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#333',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptyStateText: {
+    fontSize: 14,
+    color: '#6c757d',
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });
 
