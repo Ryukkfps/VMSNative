@@ -25,7 +25,6 @@ const HomePage = () => {
         const userToken = await getToken();
         const role = await getUserRole();
         const HomeId = await AsyncStorage.getItem('selectedHomeId');
-        console.log(HomeId);
         setToken(userToken);
         setUserRole(role);
       } catch (error) {

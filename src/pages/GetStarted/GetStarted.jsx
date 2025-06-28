@@ -10,7 +10,6 @@ const GetStarted = ({ navigation }) => {
     const checkTokenAndRedirect = async () => {
       try {
         const token = await getToken();
-        console.log(token)
         if (token) {
           navigation.replace('Home');
         }

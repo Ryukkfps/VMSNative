@@ -29,6 +29,7 @@ const Navbar = () => {
   const [userHomes, setUserHomes] = useState([]);
   const [userData, setUserData] = useState(null);
   const [selectedHomeId, setSelectedHomeId] = useState(null);
+  const[unviewedNoticount,setUnviewedNoticount] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -36,7 +37,6 @@ const Navbar = () => {
         const token = await getToken();
         const decodedToken = jwtDecode(token);
         const userId = decodedToken.userId;
-        console.log(userId);
 
         // Get selected home from AsyncStorage
 
@@ -58,7 +58,6 @@ const Navbar = () => {
           const homesResponse = await axios.get(
             `${API_URL}/homes/user/${userId}`,
           );
-          console.log(homesResponse.data);
           setUserHomes(homesResponse.data || []);
 
           // If no home is selected yet but homes exist, select the first one
@@ -83,7 +82,22 @@ const Navbar = () => {
       }
     };
 
+    const fetchNotificationCount = async () => {
+      try {
+        const token = await getToken();
+        const decodedToken = jwtDecode(token);
+        const userId = decodedToken.userId;
+
+        const response = await axios.get(`${API_URL}/notifications/user/status/${userId}`);
+        console.log(response.data);
+        setUnviewedNoticount(response.data.count);
+      } catch (error) {
+        console.error('Error fetching notification count:', error);
+      }
+    };
+
     fetchData();
+    fetchNotificationCount();
   }, []); // Only run on component mount
 
   const handleHomeSelect = async homeId => {
@@ -243,9 +257,11 @@ const Navbar = () => {
         onPress={() => navigation.navigate('Notifications')}
         style={[styles.iconContainer, styles.notificationContainer]}>
         <FontAwesomeIcon icon={faBell} size={24} style={styles.icon} />
-        <View style={styles.notificationBadge}>
-          <Text style={styles.notificationBadgeText}>3</Text>
-        </View>
+        {unviewedNoticount > 0 && (
+          <View style={styles.notificationBadge}>
+            <Text style={styles.notificationBadgeText}>{unviewedNoticount}</Text>
+          </View>
+        )}
       </TouchableOpacity>
 
       <TouchableOpacity
