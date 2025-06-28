@@ -8,7 +8,7 @@ import {
   Modal,
   Image,
 } from 'react-native';
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import axios from 'axios';
 import {API_URL} from '@env';
 import {SERVER_URL} from '@env';
@@ -26,18 +26,21 @@ const UserFeed = () => {
   const POSTS_PER_PAGE = 10;
   const navigation = useNavigation();
 
+  // Ref to prevent multiple onEndReached triggers
+  const onEndReachedCalledDuringMomentum = useRef(false);
+
   useEffect(() => {
-    fetchPosts();
+    fetchPosts(true);
   }, []);
 
   const fetchPosts = async (refresh = false) => {
     try {
       if (refresh) {
         setLoading(true);
-        setError(null); // Clear previous errors on refresh
+        setError(null);
         setPage(1);
-      } else if (loading && page === 1) {
-        // Initial load already in progress
+      } else if (loading || loadingMore) {
+        // Prevent overlapping loads
         return;
       } else {
         setLoadingMore(true);
@@ -45,48 +48,47 @@ const UserFeed = () => {
 
       const Home = await AsyncStorage.getItem('selectedHomeObject');
       if (Home) {
-        console.log('Retrieved Home from AsyncStorage:', Home);
         const parsedHome = JSON.parse(Home);
-        console.log('Parsed Home:', parsedHome);
-        console.log(parsedHome.SId , parsedHome.SId._id)
         if (parsedHome.SId && parsedHome.SId._id) {
-          const currentPage = refresh ? 1 : page;
+          // Calculate next page to fetch
+          const nextPage = refresh ? 1 : page + 1;
           const response = await axios.get(
             `${API_URL}/blog-posts/society/${parsedHome.SId._id}`,
             {
               params: {
-                page: currentPage,
+                page: nextPage,
                 limit: POSTS_PER_PAGE,
               },
             },
           );
 
           const newPosts = response.data.posts;
-          console.log(newPosts);
 
-          if (refresh || page === 1) {
+          if (refresh) {
             setPosts(newPosts);
           } else {
             setPosts(prevPosts => [...prevPosts, ...newPosts]);
           }
 
           setHasMore(newPosts.length === POSTS_PER_PAGE);
-          if (!refresh) setPage(prevPage => prevPage + 1); // Use functional update for page
+
+          // Only increment page if there are more posts
+          if (newPosts.length === POSTS_PER_PAGE) {
+            setPage(nextPage);
+          }
+
+          setError(null);
         } else {
-          console.error('SId or SId._id not found in parsedHome:', parsedHome);
           setError('Society ID not found. Cannot fetch posts.');
-          setPosts([]); // Clear posts if SId is missing
+          setPosts([]);
           setHasMore(false);
         }
       } else {
-        console.warn('selectedHomeObject not found in AsyncStorage');
         setError('No society selected. Please select a society to see posts.');
-        setPosts([]); // Clear posts if no home is selected
+        setPosts([]);
         setHasMore(false);
       }
     } catch (error) {
-      //  
-      // Check if the error is from axios or other parts
       if (axios.isAxiosError(error)) {
         setError(`Failed to load blog posts: ${error.message}`);
       } else {
@@ -105,8 +107,9 @@ const UserFeed = () => {
   };
 
   const handleLoadMore = () => {
-    if (!loading && !loadingMore && hasMore) {
-      fetchPosts();
+    if (!loading && !loadingMore && hasMore && !onEndReachedCalledDuringMomentum.current) {
+      fetchPosts(false);
+      onEndReachedCalledDuringMomentum.current = true;
     }
   };
 
@@ -155,7 +158,7 @@ const UserFeed = () => {
               <Image
                 source={{
                   uri: `${SERVER_URL}/${item.image
-                    .replace(/\\\\/g, '/')
+                    .replace(/\\/g, '/')
                     .replace(/\\/g, '/')}`,
                 }}
                 style={styles.postImage}
@@ -181,6 +184,9 @@ const UserFeed = () => {
         refreshing={loading}
         onRefresh={handleRefresh}
         contentContainerStyle={styles.flatListContent}
+        onMomentumScrollBegin={() => {
+          onEndReachedCalledDuringMomentum.current = false;
+        }}
       />
 
       {/* FloatingPlusButton moved outside the FlatList context */}
