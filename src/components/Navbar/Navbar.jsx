@@ -283,8 +283,9 @@ const Navbar = () => {
               <Text style={styles.userEmail}>{userData?.Email || ''}</Text>
             </View>
             <View style={styles.menuItemsContainer}>
-              <TouchableOpacity style={styles.menuItem}>
-                <Text style={styles.menuItemText}>Profile Settings</Text>
+              <TouchableOpacity style={styles.menuItem}
+              onPress={() => navigation.navigate('Feedback')}>
+                <Text style={styles.menuItemText}>Feedback</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.menuItem, styles.logoutItem]}
