@@ -13,6 +13,7 @@ import {
   faUserCircle,
   faBell,
   faCheck,
+  faEnvelope,
 } from '@fortawesome/free-solid-svg-icons';
 import {getToken, removeToken} from '../../utils/dbStore';
 import {jwtDecode} from 'jwt-decode';
@@ -269,6 +270,14 @@ const Navbar = () => {
             <Text style={styles.notificationBadgeText}>{unviewedNoticount}</Text>
           </View>
         )}
+      </TouchableOpacity>
+
+      {/* Direct Message Icon */}
+      <TouchableOpacity
+        onPress={() => navigation.navigate('DirectMessages')}
+        style={styles.iconContainer}
+      >
+        <FontAwesomeIcon icon={faEnvelope} size={24} style={styles.icon} />
       </TouchableOpacity>
 
       <TouchableOpacity
