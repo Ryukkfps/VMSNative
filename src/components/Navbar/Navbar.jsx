@@ -37,6 +37,7 @@ const Navbar = () => {
         const token = await getToken();
         const decodedToken = jwtDecode(token);
         const userId = decodedToken.userId;
+        console.log(userId)
 
         // Get selected home from AsyncStorage
 
@@ -63,6 +64,7 @@ const Navbar = () => {
           // If no home is selected yet but homes exist, select the first one
           if (
             !storedHomeId &&
+
             homesResponse.data &&
             homesResponse.data.length > 0
           ) {
@@ -201,53 +203,58 @@ const Navbar = () => {
 
   return (
     <View style={styles.navbar}>
-      <TouchableOpacity
-        onPress={() => handleDropdownToggle('building')}
-        style={styles.iconContainer}
-      >
-        <FontAwesomeIcon icon={faBuilding} size={24} style={styles.icon} />
-      </TouchableOpacity>
-      {buildingDropdownVisible && (
+      {/* Building icon and dropdown only for non-guard users */}
+      {userData?.RoleId !== '67fe5a81027cdb3ef83c3c05' && (
         <>
           <TouchableOpacity
-            style={styles.overlay}
-            onPress={() => setBuildingDropdownVisible(false)}
-          />
-          <View style={styles.dropdownMenu}>
-            {userHomes.length > 0 ? (
-              <FlatList
-                data={userHomes}
-                renderItem={renderHomeItem}
-                keyExtractor={(item, index) => index.toString()}
-                style={styles.homesList}
-              />
-            ) : (
-              <Text style={styles.noHomesText}>No homes registered</Text>
-            )}
-            <View>
+            onPress={() => handleDropdownToggle('building')}
+            style={styles.iconContainer}
+          >
+            <FontAwesomeIcon icon={faBuilding} size={24} style={styles.icon} />
+          </TouchableOpacity>
+          {buildingDropdownVisible && (
+            <>
               <TouchableOpacity
-                style={[
-                  styles.addHomeButton,
-                  {
-                    padding: 15,
-                    borderTopWidth: 1,
-                    borderTopColor: '#eee',
-                    width: '100%',
-                    alignItems: 'center',
-                  },
-                ]}
-                onPress={() => navigation.navigate('AddHome')}>
-                <Text
-                  style={{
-                    fontSize: 14,
-                    color: '#007AFF',
-                    fontWeight: '500',
-                  }}>
-                  + Add a Flat or Apartment
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+                style={styles.overlay}
+                onPress={() => setBuildingDropdownVisible(false)}
+              />
+              <View style={styles.dropdownMenu}>
+                {userHomes.length > 0 ? (
+                  <FlatList
+                    data={userHomes}
+                    renderItem={renderHomeItem}
+                    keyExtractor={(item, index) => index.toString()}
+                    style={styles.homesList}
+                  />
+                ) : (
+                  <Text style={styles.noHomesText}>No homes registered</Text>
+                )}
+                <View>
+                  <TouchableOpacity
+                    style={[
+                      styles.addHomeButton,
+                      {
+                        padding: 15,
+                        borderTopWidth: 1,
+                        borderTopColor: '#eee',
+                        width: '100%',
+                        alignItems: 'center',
+                      },
+                    ]}
+                    onPress={() => navigation.navigate('AddHome')}>
+                    <Text
+                      style={{
+                        fontSize: 14,
+                        color: '#007AFF',
+                        fontWeight: '500',
+                      }}>
+                      + Add a Flat or Apartment
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </>
+          )}
         </>
       )}
 

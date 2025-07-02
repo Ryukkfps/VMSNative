@@ -153,27 +153,31 @@ const UserFeed = () => {
         data={posts}
         keyExtractor={(item, index) => item._id || index.toString()}
         renderItem={({item}) => (
-          <View style={styles.postCard}>
-            {item.image ? (
-              <Image
-                source={{
-                  uri: `${SERVER_URL}/${item.image
-                    .replace(/\\/g, '/')
-                    .replace(/\\/g, '/')}`,
-                }}
-                style={styles.postImage}
-                resizeMode="cover"
-              />
-            ) : null}
-            <Text style={styles.postTitle}>{item.title}</Text>
-            <Text style={styles.postContent}>{item.content}</Text>
-            <Text style={styles.postAuthor}>
-              By: {item.author?.Name || 'Unknown'}
-            </Text>
-            <Text style={styles.postDate}>
-              {new Date(item.createdAt).toLocaleDateString()}
-            </Text>
-          </View>
+          <TouchableOpacity
+  style={styles.postCard}
+  activeOpacity={0.8}
+  onPress={() => navigation.navigate('PostDetail', { post: item })}
+>
+  {item.image ? (
+    <Image
+      source={{
+        uri: `${SERVER_URL}/${item.image
+          .replace(/\\/g, '/')
+          .replace(/\\/g, '/')}`,
+      }}
+      style={styles.postImage}
+      resizeMode="cover"
+    />
+  ) : null}
+  <Text style={styles.postTitle}>{item.title}</Text>
+  <Text style={styles.postContent}>{item.content}</Text>
+  <Text style={styles.postAuthor}>
+    By: {item.author?.Name || 'Unknown'}
+  </Text>
+  <Text style={styles.postDate}>
+    {new Date(item.createdAt).toLocaleDateString()}
+  </Text>
+</TouchableOpacity>
         )}
         ListEmptyComponent={
           <Text style={styles.emptyText}>No blog posts available</Text>

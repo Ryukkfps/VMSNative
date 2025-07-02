@@ -6,20 +6,146 @@ import {
   Image,
   TouchableOpacity,
   SafeAreaView,
+  FlatList,
+  TextInput,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
-import React from 'react';
-import {useNavigation, useRoute} from '@react-navigation/native';
-import {SERVER_URL} from '@env';
-import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {faArrowLeft} from '@fortawesome/free-solid-svg-icons';
+import React, { useState, useEffect } from 'react';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { SERVER_URL, API_URL } from '@env';
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { jwtDecode } from 'jwt-decode';
+import { getToken } from '../../utils/dbStore';
 
 const PostDetail = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const {post} = route.params;
+  const { post } = route.params;
+
+  const [comments, setComments] = useState([]);
+  const [commentText, setCommentText] = useState('');
+  const [replyTo, setReplyTo] = useState(null); // comment id being replied to
+  const [loadingComments, setLoadingComments] = useState(true);
+  const [postingComment, setPostingComment] = useState(false);
+  const [error, setError] = useState(null);
 
   const handleGoBack = () => {
     navigation.goBack();
+  };
+
+  const fetchComments = async () => {
+    try {
+      setLoadingComments(true);
+      setError(null);
+      const response = await axios.get(`${API_URL}/blog-posts/${post._id}/comments`);
+      setComments(response.data.comments || []);
+    } catch (err) {
+      setError('Failed to load comments');
+    } finally {
+      setLoadingComments(false);
+    }
+  };
+
+  // Helper: Convert flat comments array to nested tree
+  const buildCommentTree = (comments) => {
+    const map = {};
+    const roots = [];
+    comments.forEach(comment => {
+      map[comment._id] = {...comment, replies: []};
+    });
+    comments.forEach(comment => {
+      if (comment.parentId) {
+        if (map[comment.parentId]) {
+          map[comment.parentId].replies.push(map[comment._id]);
+        }
+      } else {
+        roots.push(map[comment._id]);
+      }
+    });
+    return roots;
+  };
+
+  useEffect(() => {
+    fetchComments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [post._id]);
+
+  const handleAddComment = async () => {
+    if (!commentText.trim()) return;
+    setPostingComment(true);
+    setError(null);
+    try {
+      // Optionally get user info from AsyncStorage
+      const token = await getToken();
+      const decodedToken = jwtDecode(token);
+      const userId = decodedToken.userId;
+      const userResponse = await axios.get(`${API_URL}/users/${userId}`);
+      const userName = userResponse.data?.Name || 'Anonymous';
+      await axios.post(`${API_URL}/blog-posts/${post._id}/comments`, {
+        content: commentText,
+        userId,
+        userName,
+        parentId: replyTo || null,
+      });
+      setCommentText('');
+      setReplyTo(null);
+      fetchComments();
+    } catch (err) {
+      setError('Failed to post comment');
+    } finally {
+      setPostingComment(false);
+    }
+  };
+
+  const renderNestedComments = (comments, level = 0) => {
+    return comments.map(comment => (
+      <View key={comment._id} style={[styles.commentCard, { marginLeft: level * 20 }]}> 
+        <Text style={styles.commentAuthor}>{comment.userName || 'User'}</Text>
+        <Text style={styles.commentContent}>{comment.content}</Text>
+        <Text style={styles.commentDate}>{new Date(comment.createdAt).toLocaleString()}</Text>
+        <TouchableOpacity
+          style={styles.replyButton}
+          onPress={() => {
+            setReplyTo(comment._id);
+            setCommentText('');
+          }}
+        >
+          <Text style={styles.replyButtonText}>Reply</Text>
+        </TouchableOpacity>
+        {/* If replying to this comment, show input */}
+        {replyTo === comment._id && (
+          <View style={styles.replyInputContainer}>
+            <TextInput
+              style={styles.replyInput}
+              placeholder="Write a reply..."
+              value={commentText}
+              onChangeText={setCommentText}
+              editable={!postingComment}
+              multiline
+              autoFocus
+            />
+            <TouchableOpacity
+              style={styles.replySendButton}
+              onPress={handleAddComment}
+              disabled={postingComment || !commentText.trim()}
+            >
+              <Text style={styles.replySendButtonText}>{postingComment ? 'Posting...' : 'Send'}</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+        {/* Render replies recursively */}
+        {comment.replies && comment.replies.length > 0 && (
+          <View style={styles.repliesContainer}>
+            {renderNestedComments(comment.replies, level + 1)}
+          </View>
+        )}
+      </View>
+    ));
   };
 
   return (
@@ -70,12 +196,186 @@ const PostDetail = () => {
             <Text style={styles.postContent}>{post.content}</Text>
           </View>
         </View>
+
+        {/* Comment Section */}
+        <View style={styles.commentSection}>
+          <Text style={styles.commentHeader}>Comments</Text>
+          {loadingComments ? (
+            <ActivityIndicator size="small" color="#007AFF" style={{ marginVertical: 10 }} />
+          ) : error ? (
+            <Text style={styles.commentError}>{error}</Text>
+          ) : comments.length === 0 ? (
+            <Text style={styles.noCommentsText}>No comments yet. Be the first to comment!</Text>
+          ) : (
+            <View style={{ paddingBottom: 10 }}>
+              {renderNestedComments(buildCommentTree(comments))}
+            </View>
+          )}
+        </View>
       </ScrollView>
+
+      {/* Add Comment Input */}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={80}
+      >
+        <View style={styles.addCommentContainer}>
+          <TextInput
+            style={styles.commentInput}
+            placeholder="Add a comment..."
+            value={commentText}
+            onChangeText={setCommentText}
+            editable={!postingComment}
+            multiline
+          />
+          <TouchableOpacity
+            style={styles.commentButton}
+            onPress={() => {
+              setReplyTo(null);
+              handleAddComment();
+            }}
+            disabled={postingComment || !commentText.trim()}
+          >
+            <Text style={styles.commentButtonText}>{postingComment ? 'Posting...' : 'Post'}</Text>
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  commentSection: {
+    backgroundColor: '#fff',
+    marginHorizontal: 16,
+    marginTop: 8,
+    borderRadius: 8,
+    padding: 16,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+  },
+  commentHeader: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#007AFF',
+  },
+  commentCard: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#ececec',
+    paddingVertical: 8,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 6,
+    marginBottom: 6,
+    paddingHorizontal: 8,
+  },
+  commentAuthor: {
+    fontWeight: 'bold',
+    color: '#333',
+    fontSize: 14,
+  },
+  commentContent: {
+    fontSize: 15,
+    color: '#444',
+    marginVertical: 2,
+  },
+  commentDate: {
+    fontSize: 12,
+    color: '#888',
+    textAlign: 'right',
+  },
+  noCommentsText: {
+    color: '#888',
+    fontSize: 15,
+    textAlign: 'center',
+    marginVertical: 10,
+  },
+  commentError: {
+    color: 'red',
+    fontSize: 14,
+    textAlign: 'center',
+    marginVertical: 10,
+  },
+  addCommentContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    backgroundColor: '#fff',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#e9ecef',
+  },
+  commentInput: {
+    flex: 1,
+    minHeight: 40,
+    maxHeight: 100,
+    backgroundColor: '#f2f2f2',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    fontSize: 15,
+    marginRight: 8,
+  },
+  commentButton: {
+    backgroundColor: '#007AFF',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  commentButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 15,
+  },
+  replyButton: {
+    alignSelf: 'flex-start',
+    marginTop: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    backgroundColor: '#e1ecf7',
+    borderRadius: 12,
+  },
+  replyButtonText: {
+    color: '#007AFF',
+    fontSize: 13,
+    fontWeight: 'bold',
+  },
+  replyInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  replyInput: {
+    flex: 1,
+    minHeight: 36,
+    maxHeight: 80,
+    backgroundColor: '#f2f2f2',
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    fontSize: 14,
+    marginRight: 6,
+  },
+  replySendButton: {
+    backgroundColor: '#007AFF',
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  replySendButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  repliesContainer: {
+    marginTop: 2,
+  },
   container: {
     flex: 1,
     backgroundColor: '#f8f9fa',
