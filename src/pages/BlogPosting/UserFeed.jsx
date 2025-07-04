@@ -47,6 +47,7 @@ const UserFeed = () => {
       }
 
       const Home = await AsyncStorage.getItem('selectedHomeObject');
+      console.log("")
       if (Home) {
         const parsedHome = JSON.parse(Home);
         if (parsedHome.SId && parsedHome.SId._id) {

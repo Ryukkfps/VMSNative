@@ -75,6 +75,7 @@ const PreApproved = () => {
 
   const handleSubmit = async () => {
     try {
+      console.log("")
       // Check if a home is selected
       if (!selectedHome) {
         Toast.show({

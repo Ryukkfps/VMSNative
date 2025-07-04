@@ -41,7 +41,7 @@ export async function requestUserPermission() {
 export async function getFcmToken() {
     try {
         const token = await messaging().getToken();
-        console.log('FCM Token:', token);
+        console.log();
         return token;
     } catch (error) {
         console.error('Error getting FCM token:', error);
@@ -52,6 +52,7 @@ export async function sendFcmTokenToBackend(userId) {
     try {
         console.log("Start sending FCM token...");
         const token = await messaging().getToken();
+        console.log("");
         
         if (token) {
             await axios.post(`${API_URL}/users/save-fcm-token`, {

@@ -43,6 +43,7 @@ const PostDetail = () => {
       setLoadingComments(true);
       setError(null);
       const response = await axios.get(`${API_URL}/blog-posts/${post._id}/comments`);
+      console.log("")
       setComments(response.data.comments || []);
     } catch (err) {
       setError('Failed to load comments');

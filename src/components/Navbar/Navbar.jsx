@@ -46,6 +46,7 @@ const Navbar = () => {
         // Fetch user data and homes data separately to handle errors independently
         try {
           const userResponse = await axios.get(`${API_URL}/users/${userId}`);
+          console.log("")
           setUserData(userResponse.data);
         } catch (userError) {
           console.error('Error fetching user data:', userError);

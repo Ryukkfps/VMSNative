@@ -64,6 +64,7 @@ const GatePassVerification = () => {
   };
 
   const handleVerify = async () => {
+    console.log("Verifying")
     if (!passkey.trim()) {
       Toast.show({
         type: 'error',
@@ -211,8 +212,7 @@ const GatePassVerification = () => {
             placeholder="Enter Passkey"
             value={passkey}
             onChangeText={setPasskey}
-            keyboardType="default"
-            autoCapitalize="characters"
+            keyboardType="numeric"
             maxLength={20}
             editable={!loading}
           />

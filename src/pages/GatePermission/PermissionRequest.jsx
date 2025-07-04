@@ -108,6 +108,7 @@ const PermissionRequest = () => {
   };
 
   const handleSubmit = async () => {
+    console.log("Submitting")
     if (!formData.name || !formData.purpose || !selectedUnit) {
       Toast.show({
         type: 'error',

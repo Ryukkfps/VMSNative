@@ -59,6 +59,7 @@ const CreatePost = () => {
   };
 
   const handleSubmit = async () => {
+    console.log("Submitting")
     const formData = new FormData();
     formData.append('title', title);
     formData.append('content', content);

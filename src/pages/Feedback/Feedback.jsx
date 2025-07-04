@@ -27,6 +27,7 @@ const Feedback = () => {
     };
 
     const handleSubmit = async () => {
+        console.log("")
         setSubmitting(true);
         const formData = new FormData();
         formData.append('name', name);

@@ -21,6 +21,7 @@ const Login = ({navigation}) => {
 
   // Function to send OTP
   const handleSendOtp = async () => {
+    console.log("SendingOTP")
     try {
       if (!emailOrPhone) {
         Toast.show({

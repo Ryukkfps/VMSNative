@@ -27,6 +27,7 @@ const Notifications = () => {
         const user = decodedToken.userId;
         const role = await getUserRole();
         setUserRole(role);
+        console.log("")
 
         const response = await axios.get(
           `${API_URL}/notifications/user/${user}`,
