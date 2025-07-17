@@ -275,7 +275,7 @@ const Navbar = () => {
 
       {/* Direct Message Icon */}
       <TouchableOpacity
-        onPress={() => navigation.navigate('DirectMessages')}
+        onPress={() => navigation.navigate('ContactListScreen')}
         style={styles.iconContainer}
       >
         <FontAwesomeIcon icon={faEnvelope} size={24} style={styles.icon} />

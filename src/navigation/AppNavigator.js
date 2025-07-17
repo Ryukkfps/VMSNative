@@ -13,7 +13,8 @@ import CreatePost from '../pages/BlogPosting/CreatePost';
 import PostDetail from '../pages/BlogPosting/PostDetail';
 import GatePassVerification from '../pages/GatePermission/GatePassVerification';
 import Feedback from '../pages/Feedback/Feedback';
-import DMList from '../pages/DirectMessage/DMList';
+import ChatScreen from '../pages/DirectMessage/ChatScreen';
+import ContactListScreen from '../pages/DirectMessage/ContactListScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -43,7 +44,16 @@ const AppNavigator = () => {
           component={GatePassVerification}
         />
         <Stack.Screen name="Feedback" component={Feedback} />
-        <Stack.Screen name="DirectMessages" component={DMList} />
+        <Stack.Screen
+          name="ContactListScreen"
+          component={ContactListScreen}
+          options={{title: 'Direct Messages'}}
+        />
+        <Stack.Screen
+          name="ChatScreen"
+          component={ChatScreen}
+          options={({route}) => ({title: route.params?.other?.name || 'Chat'})}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );
