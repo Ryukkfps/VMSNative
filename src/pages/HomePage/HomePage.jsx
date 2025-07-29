@@ -23,6 +23,7 @@ const HomePage = () => {
     const fetchData = async () => {
       try {
         const userToken = await getToken();
+        console.log(userToken);
         const role = await getUserRole();
         const HomeId = await AsyncStorage.getItem('selectedHomeId');
         setToken(userToken);

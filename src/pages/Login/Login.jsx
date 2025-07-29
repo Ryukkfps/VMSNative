@@ -31,7 +31,7 @@ const Login = ({navigation}) => {
         });
         return;
       }
-
+      console.log(API_URL)
       const response = await axios.post(`${API_URL}/login/sentemailloginotp`, {
         email: emailOrPhone,
       });

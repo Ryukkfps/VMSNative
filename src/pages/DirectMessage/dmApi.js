@@ -15,6 +15,12 @@ const getAuthHeaders = async () => {
 
 // ------------------- API METHODS -------------------
 
+const startChat = async (otherUserId) => {
+  const headers = await getAuthHeaders();
+  const res = await axios.post(`${BASE_URL}/rooms/create`, { otherUserId }, headers);
+  return res.data;
+};
+
 const getRooms = async () => {
   const headers = await getAuthHeaders();
   const res = await axios.get(`${BASE_URL}/rooms`, headers);
@@ -93,6 +99,7 @@ const getSocietyUsers = async (societyId) => {
 
 export default {
   getRooms,
+  startChat,
   getRoomDetails,
   archiveRoom,
   muteRoom,
