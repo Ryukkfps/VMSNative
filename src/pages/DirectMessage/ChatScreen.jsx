@@ -31,37 +31,6 @@ const ChatScreen = () => {
     })();
   }, []);
 
-  // Setup socket.io for live chat
-  useEffect(() => {
-    let socket;
-    (async () => {
-      socket = await initSocket();
-      socketRef.current = socket;
-      console.log('[SOCKET] Connecting and joining room:', roomId);
-      socket.emit('joinRoom', roomId);
-      socket.on('newMessage', (msg) => {
-        console.log('[SOCKET] newMessage received:', msg);
-        if (msg.room_id === roomId) {
-          setMessages((prev) => [mapToFlyerMessage(msg), ...prev]);
-        }
-      });
-      socket.on('userTyping', (typingInfo) => {
-        console.log('[SOCKET] userTyping received:', typingInfo);
-        if (typingInfo.roomId === roomId && typingInfo.userId !== user?.id) {
-          setIsTyping(typingInfo.isTyping);
-        }
-      });
-    })();
-    return () => {
-      if (socket) {
-        console.log('[SOCKET] Leaving room:', roomId);
-        socket.emit('leaveRoom', roomId);
-        socket.off('newMessage');
-        socket.off('userTyping');
-      }
-    };
-  }, [roomId, user?.id]);
-
   // Fetch initial messages
   useEffect(() => {
     (async () => {
@@ -102,6 +71,7 @@ const ChatScreen = () => {
       socketRef.current = socket;
       console.log('[SOCKET] Connecting and joining room:', roomId);
       socket.emit('joinRoom', roomId);
+      console.log("joinRoom" + roomId)
       socket.on('newMessage', handleSocketMessage);
       socket.on('userTyping', handleTyping);
     })();
