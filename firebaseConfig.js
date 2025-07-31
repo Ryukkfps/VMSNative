@@ -71,20 +71,26 @@ export async function sendFcmTokenToBackend(userId) {
 }
 
 // Add this function to configure background notifications
-export function configureNotifications() {
+export function configureNotifications(navigationRef) {
   // Configure local notifications
   PushNotification.configure({
     // (required) Called when a remote or local notification is opened or received
     onNotification: function (notification) {
       console.log('NOTIFICATION:', notification);
+      
+      // Handle notification tap/click
+      if (notification.userInteraction) {
+        handleNotificationClick(notification, navigationRef);
+      }
     },
     // Should the initial notification be popped automatically
     popInitialNotification: true,
     requestPermissions: Platform.OS === 'ios',
   });
 
-  // Create notification channel for Android
+  // Create notification channels for Android
   if (Platform.OS === 'android') {
+    // Default channel
     PushNotification.createChannel(
       {
         channelId: 'default-channel',
@@ -92,7 +98,21 @@ export function configureNotifications() {
         importance: 4,
         vibrate: true,
       },
-      (created) => console.log(`Channel created: ${created}`)
+      (created) => console.log(`Default channel created: ${created}`)
+    );
+    
+    // DM messages channel
+    PushNotification.createChannel(
+      {
+        channelId: 'dm_messages',
+        channelName: 'Direct Messages',
+        channelDescription: 'Notifications for direct messages',
+        importance: 4,
+        vibrate: true,
+        playSound: true,
+        soundName: 'default',
+      },
+      (created) => console.log(`DM messages channel created: ${created}`)
     );
   }
 
@@ -102,11 +122,45 @@ export function configureNotifications() {
     
     // Display the notification using PushNotification
     PushNotification.localNotification({
-      channelId: 'default-channel',
+      channelId: remoteMessage.data?.type === 'dm_message' ? 'dm_messages' : 'default-channel',
       title: remoteMessage.notification.title,
       message: remoteMessage.notification.body,
       playSound: true,
       soundName: 'default',
+      userInfo: remoteMessage.data, // Pass data for handling clicks
     });
   });
+}
+
+// Handle notification click/tap
+function handleNotificationClick(notification, navigationRef) {
+  try {
+    console.log('Handling notification click:', notification);
+    
+    // Get notification data (either from userInfo or data)
+    const data = notification.userInfo || notification.data || {};
+    
+    if (data.type === 'dm_message' && data.roomId) {
+      // Navigate to the specific chat room
+      if (navigationRef?.current) {
+        // First navigate to the chat list screen
+        navigationRef.current.navigate('MainTabs', {
+          screen: 'Profile', // Assuming your chat screen is in Profile tab
+        });
+        
+        // Then navigate to the specific chat
+        setTimeout(() => {
+          navigationRef.current.navigate('ChatScreen', {
+            roomId: data.roomId,
+            other: {
+              _id: data.senderId,
+              name: 'Chat', // You might want to store sender name in notification data
+            }
+          });
+        }, 100);
+      }
+    }
+  } catch (error) {
+    console.error('Error handling notification click:', error);
+  }
 }

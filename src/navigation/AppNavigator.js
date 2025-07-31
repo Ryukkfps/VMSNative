@@ -18,9 +18,9 @@ import ContactListScreen from '../pages/DirectMessage/ContactListScreen';
 
 const Stack = createNativeStackNavigator();
 
-const AppNavigator = () => {
+const AppNavigator = ({ navigationRef }) => {
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
       <Stack.Navigator
         initialRouteName="GetStarted"
         screenOptions={{

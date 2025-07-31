@@ -2,6 +2,8 @@ import {io} from 'socket.io-client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SERVER_URL } from '@env';
 import {getToken} from '../../utils/dbStore';
+import { sendFcmTokenToBackend } from '../../../firebaseConfig';
+import { jwtDecode } from 'jwt-decode';
 
 const SOCKET_URL = `${SERVER_URL}`;
 let socket = null;
@@ -21,9 +23,20 @@ const createSocket = async () => {
     autoConnect: false,
   });
 
-  socket.on('connect', () => {
+  socket.on('connect', async () => {
     console.log('Socket connected:', socket.id);
     updateOnlineStatus(true);
+    
+    // Send FCM token to backend when socket connects
+    try {
+      const decoded = jwtDecode(token);
+      if (decoded.userId) {
+        await sendFcmTokenToBackend(decoded.userId);
+        console.log('FCM token sent to backend on socket connection');
+      }
+    } catch (error) {
+      console.error('Error sending FCM token on socket connection:', error);
+    }
   });
 
   socket.on('disconnect', (reason) => {
