@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 import React, {useState, useEffect} from 'react';
 import Navbar from '../../components/Navbar/Navbar';
+import BottomActionBar from '../../components/BottomActionBar';
 import {getToken, getUserRole} from '../../utils/dbStore';
 import {useNavigation} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -40,7 +41,10 @@ const HomePage = () => {
     <SafeAreaView style={styles.safeContainer}>
       <Navbar />
       {userRole !== 'Guard' ? (
-        <UserFeed />
+        <>
+          <UserFeed />
+          <BottomActionBar />
+        </>
       ) : (
         <View style={styles.guardContainer}>
           <Text style={styles.welcomeText}>Guard Dashboard</Text>

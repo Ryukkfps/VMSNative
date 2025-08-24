@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TouchableOpacity, Text, StyleSheet, Modal, View } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, Modal, View, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const FloatingPlusButton = ({ onPress, visible = true, style, icon = '+', navigation }) => {
@@ -16,10 +16,10 @@ const FloatingPlusButton = ({ onPress, visible = true, style, icon = '+', naviga
     }
   };
 
+  // Fixed original position: bottom-right with safe-area offset
   const fabStyle = [
     styles.fab,
     { bottom: Math.max(30, insets.bottom + 20) }, // Ensure button is above safe area
-    style
   ];
 
   return (
@@ -75,12 +75,18 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOpacity: 0.3,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
     zIndex: 100,
+    // Shadow: use elevation only on Android, shadow props only on iOS
+    ...Platform.select({
+      android: { elevation: 6, overflow: 'hidden' }, // clip to circle on Android only
+      ios: {
+        shadowColor: '#000',
+        shadowOpacity: 0.25,
+        shadowOffset: { width: 0, height: 3 },
+        shadowRadius: 5,
+      },
+      default: {},
+    }),
   },
   fabIcon: {
     color: 'white',

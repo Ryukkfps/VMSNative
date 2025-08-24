@@ -13,7 +13,7 @@ import axios from 'axios';
 import {API_URL} from '@env';
 import {SERVER_URL} from '@env';
 import {useNavigation} from '@react-navigation/native';
-import FloatingPlusButton from '../../components/FloatingPlusButton/FloatingPlusButton';
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const UserFeed = () => {
@@ -141,7 +141,6 @@ const UserFeed = () => {
           <TouchableOpacity style={styles.retryButton} onPress={handleRefresh}>
             <Text style={styles.retryText}>Retry</Text>
           </TouchableOpacity>
-          <FloatingPlusButton navigation={navigation} />
         </View>
       </View>
     );
@@ -194,8 +193,7 @@ const UserFeed = () => {
         }}
       />
 
-      {/* FloatingPlusButton moved outside the FlatList context */}
-      <FloatingPlusButton navigation={navigation} />
+
     </View>
   );
 };
